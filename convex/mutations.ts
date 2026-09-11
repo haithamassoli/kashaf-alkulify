@@ -7,6 +7,7 @@
 
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { retireLesson } from "./lib/lessons";
 
 const STALE_HEARTBEAT_MS = 5 * 60 * 1000; // §4.5
 
@@ -734,6 +735,33 @@ export const setLessonTranscript = mutation({
 // §0 amendment 1 / §4.7's other half. An approved lesson is frozen against
 // recomposition, but a source message edited or deleted underneath it must not
 // be silently kept either. The only legal move is to hand it back to a human.
+/**
+ * Retires a lesson the Organizer no longer composes.
+ *
+ * Grouping v2 joins a lesson's parts across a longer pause, so a run that v1
+ * cut in two now composes entirely under the first half's `lessonKey` and the
+ * second half's row describes audio that belongs to its neighbour. `deletedAt`
+ * is the only thing that can take such a row out of the dashboard and the site,
+ * and the row survives as its own tombstone either way.
+ *
+ * Pipeline-side, so §4.7 outranks it: an approved lesson or a hand-edited
+ * composition is reported back untouched for a human to settle.
+ */
+export const retireSupersededLesson = mutation({
+  args: { lessonId: v.id("lessons"), reason: v.string() },
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.lessonId);
+    if (row === null || row.deletedAt !== undefined) {
+      return { retired: false };
+    }
+    if (row.reviewStatus === "approved" || row.partsLocked === true) {
+      return { retired: false };
+    }
+    await retireLesson(ctx, args.lessonId);
+    return { retired: true };
+  },
+});
+
 export const demoteLesson = mutation({
   args: { lessonId: v.id("lessons"), reason: v.string() },
   handler: async (ctx, args) => {
