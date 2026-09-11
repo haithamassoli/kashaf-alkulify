@@ -1,0 +1,37 @@
+---
+import { BooksList } from "../../islands/books-list";
+import Base from "../../layouts/Base.astro";
+import { breadcrumb, SHEIKH, SITE_URL } from "../../lib/seo";
+
+// No `mainEntity` ItemList: the books stream in from Convex at runtime, so the
+// build has no list to enumerate — and a made-up count would be worse than none.
+const schema = {
+  "@context": "https://schema.org",
+  "@id": `${SITE_URL}/b/#collection`,
+  "@type": "CollectionPage",
+  inLanguage: "ar",
+  name: "الكتب",
+};
+---
+
+<Base
+  description={`كتب ومصنفات ${SHEIKH} مع روابط القراءة والتنزيل بصيغة PDF.`}
+  schema={[schema, breadcrumb([["الكتب", "/b/"]])]}
+  title="الكتب"
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">
+    كتب ومصنفات الشيخ
+  </h1>
+  <p class="mt-3 text-muted">كتب الشيخ المتاحة للقراءة والتنزيل بصيغة PDF.</p>
+
+  <a
+    class="mt-5 inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm transition-colors hover:bg-surface-2"
+    href="https://drive.google.com/drive/folders/1_PWOwSJ3ptMTMM_Cn2yuu4jQSLQ406B2"
+    rel="noopener"
+    target="_blank"
+  >
+    فتح مجلد الكتب في Google Drive
+  </a>
+
+  <BooksList client:load />
+</Base>

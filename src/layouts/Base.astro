@@ -1,0 +1,317 @@
+---
+import { Font } from "astro:assets";
+import { HOME_TITLE, SHEIKH, SITE } from "../lib/seo";
+import "../styles/global.css";
+
+interface Props {
+  description?: string;
+  /** Absolute or root-relative; falls back to the site card. */
+  image?: string;
+  noindex?: boolean;
+  /** JSON-LD for this page; rendered in <head> so it can't land before the doctype. */
+  schema?: Record<string, unknown>[];
+  title?: string;
+  /** Open Graph type. */
+  type?: "website" | "article";
+  wide?: boolean;
+}
+
+const {
+  title,
+  description = `كتب ومصنفات ${SHEIKH}`,
+  noindex = false,
+  wide = false,
+  // Purpose-built card at 1200×630.
+  image = "/og.png",
+  type = "website",
+  schema = [],
+} = Astro.props;
+
+// Simple Icons paths (24×24, filled).
+const social = [
+  {
+    d: "M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z",
+    href: "https://t.me/alkulife",
+    label: "تيليجرام",
+  },
+  {
+    d: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
+    href: "https://www.youtube.com/@Alkulify1",
+    label: "يوتيوب",
+  },
+  {
+    d: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
+    href: "https://www.facebook.com/alkulify",
+    label: "فيسبوك",
+  },
+  {
+    d: "M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z",
+    href: "https://x.com/Xalkulify",
+    label: "إكس",
+  },
+];
+// Square 44×44 target in the header: the theme toggle.
+const icon =
+  "grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg";
+
+const fullTitle = title ? `${title} — ${SITE}` : HOME_TITLE;
+const base = Astro.site ?? Astro.url.origin;
+const canonical = new URL(Astro.url.pathname, base).href;
+const ogImage = new URL(image, base).href;
+// Only the site card's dimensions are known ahead of time.
+const isCard = image === "/og.png";
+const jsonLd = (data: Record<string, unknown>) =>
+  JSON.stringify(data).replaceAll("<", "\\u003c");
+---
+
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <Font
+      cssVariable="--font-thmanyah-sans"
+      preload={[{ style: "normal", weight: 400 }]}
+    />
+    <title>{fullTitle}</title>
+    <meta content={description} name="description">
+    <link href={canonical} rel="canonical">
+    <meta
+      content={noindex
+          ? "noindex, follow"
+          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"}
+      name="robots"
+    >
+    <meta content={SITE} property="og:site_name">
+    <meta content={fullTitle} property="og:title">
+    <meta content={description} property="og:description">
+    <meta content={type} property="og:type">
+    <meta content={canonical} property="og:url">
+    <meta content="ar_AR" property="og:locale">
+    <meta content={ogImage} property="og:image">
+    <meta content={title ?? SITE} property="og:image:alt">
+    {isCard && (
+        <>
+          <meta content="image/png" property="og:image:type" />
+          <meta content="1200" property="og:image:width" />
+          <meta content="630" property="og:image:height" />
+        </>
+      )}
+    <meta content="summary_large_image" name="twitter:card">
+    <meta content="@Xalkulify" name="twitter:site">
+    <meta content={fullTitle} name="twitter:title">
+    <meta content={description} name="twitter:description">
+    <meta content={ogImage} name="twitter:image">
+    <meta content={title ?? SITE} name="twitter:image:alt">
+    <meta
+      content="#fbfaf7"
+      media="(prefers-color-scheme: light)"
+      name="theme-color"
+    >
+    <meta
+      content="#101210"
+      media="(prefers-color-scheme: dark)"
+      name="theme-color"
+    >
+    <link href="/favicon.png" rel="icon" type="image/png">
+    <link href="/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="/site.webmanifest" rel="manifest">
+    {schema.map((data) => (
+        <script is:inline set:html={jsonLd(data)} type="application/ld+json" />
+      ))}
+  </head>
+
+  <body class="bg-bg text-fg antialiased">
+    <a
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-fg"
+      href="#main"
+      >تخطَّ إلى المحتوى</a
+    >
+
+    <header class="sticky top-0 z-30 border-b border-border bg-bg">
+      <div
+        class:list={[
+          "mx-auto flex h-14 items-center justify-between gap-3 px-4",
+          wide ? "max-w-6xl" : "max-w-3xl",
+        ]}
+      >
+        <a
+          class="-ms-2 flex h-11 min-w-0 items-center gap-2 rounded-lg px-2 text-base font-semibold tracking-tight"
+          href="/"
+        >
+          <img
+            alt=""
+            class="size-8 shrink-0 rounded-full"
+            height="32"
+            src="/favicon.png"
+            width="32"
+          >
+          <span class="sr-only min-[480px]:not-sr-only min-[480px]:truncate"
+            >{SITE}</span
+          >
+        </a>
+
+        <nav aria-label="روابط رئيسية" class="flex items-center gap-1 text-sm">
+          <a
+            class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            href="/b/"
+            >الكتب</a
+          >
+          <a
+            class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            href="/contact/"
+            >تواصل</a
+          >
+          <button
+            aria-label="الوضع الداكن"
+            aria-pressed="false"
+            class={icon}
+            id="theme-toggle"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-5 dark:hidden"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"
+                stroke-linejoin="round"
+              ></path>
+            </svg>
+            <svg
+              aria-hidden="true"
+              class="hidden size-5 dark:block"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                stroke-linecap="round"
+              ></path>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main
+      id="main"
+      class:list={["mx-auto px-4 pb-24", wide ? "max-w-6xl" : "max-w-3xl"]}
+    >
+      <slot />
+    </main>
+
+    <footer class="border-t border-border">
+      <div
+        class:list={[
+          "mx-auto px-4 py-8 text-center text-sm text-muted",
+          wide ? "max-w-6xl" : "max-w-3xl",
+        ]}
+      >
+        <ul class="flex items-center justify-center gap-1">
+          {social.map((s) => (
+              <li>
+                <a
+                  class="grid size-11 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+                  href={s.href}
+                  rel="noopener"
+                  target="_blank"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="size-5"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d={s.d} />
+                  </svg>
+                  <span class="sr-only">{s.label}</span>
+                </a>
+              </li>
+            ))}
+        </ul>
+
+        <p class="mt-4">
+          كشّاف غير رسمي لدروس الشيخ أبي جعفر عبد الله بن فهد الخليفي.
+        </p>
+        <p class="mt-1">
+          لاقتراح أو ملاحظة أو تصحيح:
+          <a class="text-accent underline underline-offset-4" href="/contact/"
+            >تواصل معنا</a
+          >.
+        </p>
+      </div>
+    </footer>
+
+    <!--
+      Body level on purpose: a page column can be `position: sticky` and so make a
+      stacking context of its own — a toast inside it could never paint over the rest
+      of the page, whatever z-index it carries.
+    -->
+    <div
+      aria-live="polite"
+      class="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center print:hidden"
+      id="toast"
+      role="status"
+    >
+      <span class="card px-4 py-2 text-sm shadow-lg" hidden></span>
+    </div>
+
+    <script>
+      const toggle = document.getElementById("theme-toggle");
+
+      if (toggle) {
+        const syncToggle = () =>
+          toggle.setAttribute(
+            "aria-pressed",
+            String(document.documentElement.classList.contains("dark"))
+          );
+
+        const flip = () => {
+          const dark = document.documentElement.classList.toggle("dark");
+          syncToggle();
+          try {
+            localStorage.setItem("theme", dark ? "dark" : "light");
+          } catch {
+            // Storage is off; the toggle still works, it just isn't remembered.
+          }
+        };
+
+        syncToggle();
+
+        toggle.addEventListener("click", () => {
+          // الدائرةُ تتّسع من مركز الزرّ؛ ومن لا يدعم الانتقالَ أو طلب سكونَ الحركة يبدّل فورًا.
+          if (
+            !document.startViewTransition ||
+            matchMedia("(prefers-reduced-motion: reduce)").matches
+          ) {
+            flip();
+            return;
+          }
+          const r = toggle.getBoundingClientRect();
+          const x = r.left + r.width / 2;
+          const y = r.top + r.height / 2;
+          const root = document.documentElement;
+          const s = root.style;
+          s.setProperty("--wipe-x", `${x}px`);
+          s.setProperty("--wipe-y", `${y}px`);
+          s.setProperty(
+            "--wipe-r",
+            `${Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))}px`
+          );
+          root.classList.add("theme-vt");
+          document
+            .startViewTransition(flip)
+            .finished.finally(() => root.classList.remove("theme-vt"));
+        });
+      }
+    </script>
+  </body>
+</html>

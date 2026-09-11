@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# The dashboard is for admins and carries a noindex meta tag as well.
+Disallow: /admin/

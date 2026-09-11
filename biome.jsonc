@@ -4,6 +4,15 @@
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "overrides": [
     {
+      // Vendored agent-skill assets and Convex codegen: not hand-written source.
+      // Linting them means `format` rewrites files their generators own, and the
+      // next `convex dev` or skill install undoes it.
+      "includes": [".agents/**", ".claude/**", "**/_generated/**"],
+      "linter": { "enabled": false },
+      "assist": { "enabled": false },
+      "formatter": { "enabled": false }
+    },
+    {
       // Astro components/layouts are PascalCase by convention.
       "includes": ["**/*.astro"],
       "linter": {
