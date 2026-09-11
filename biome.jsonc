@@ -27,14 +27,19 @@
       }
     },
     {
-      // The archive pipeline's mutations and queries. A Convex mutation is one
+      // The archive pipeline's mutations and queries, and the dashboard's
+      // read side. A Convex mutation is one
       // transaction, so its writes are sequential on purpose — order is the
       // invariant (lookup-then-write, offsets recomputed in part order), and
       // Promise.all would trade that for nothing. The rule is right about
       // network I/O and wrong about a transaction body.
-      "includes": ["convex/mutations.ts", "convex/queries.ts"],
+      "includes": [
+        "convex/admin.ts",
+        "convex/mutations.ts",
+        "convex/queries.ts"
+      ],
       //
-      // noEvolvingTypes is off for the same two files: the accumulators there
+      // noEvolvingTypes is off for the same files: the accumulators there
       // collect inline projections, and TypeScript's evolving-array inference
       // already types them correctly. Satisfying the rule would mean writing
       // each projection's shape out twice.

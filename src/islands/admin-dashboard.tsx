@@ -1,43 +1,47 @@
+/**
+ * The dashboard shell: one Convex provider, one auth gate, and a sidebar that
+ * switches between panels. Routing is `location.hash`, so a panel is
+ * bookmarkable and survives reload without pulling in a router.
+ */
+
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import {
   ConvexReactClient,
-  useMutation,
   useQuery_experimental as useQuery,
 } from "convex/react";
-import { ConvexError } from "convex/values";
 import {
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  EyeOff,
-  Pencil,
-  Plus,
-  Trash2,
+  AlertTriangle,
+  BookMarked,
+  FileText,
+  Gauge,
+  GraduationCap,
+  LogOut,
+  Menu,
 } from "lucide-react";
 import {
   type ChangeEvent,
   type FormEvent,
   type ReactNode,
+  useEffect,
   useState,
 } from "react";
 import { api } from "../../convex/_generated/api";
-import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { authClient } from "../lib/auth-client";
-import { BookForm, type BookInput } from "./book-form";
-
-const PRIMARY =
-  "inline-flex min-h-11 items-center gap-2 rounded-lg bg-accent px-4 font-medium text-accent-fg text-sm";
-const SECONDARY =
-  "inline-flex min-h-11 items-center rounded-lg border border-border px-4 text-sm transition-colors hover:bg-surface-2";
-const DANGER =
-  "inline-flex min-h-11 items-center rounded-lg border border-destructive px-3 text-destructive text-sm transition-colors hover:bg-surface-2";
-const ICON_BUTTON =
-  "grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg disabled:pointer-events-none disabled:opacity-40";
-const FIELD =
-  "mt-2 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted";
-const CELL = "border-border border-t py-3 pe-3 align-middle";
-const BANNER =
-  "mt-4 rounded-lg border border-destructive px-4 py-3 text-destructive text-sm";
+import { Articles } from "./admin/articles";
+import { Books } from "./admin/books";
+import { Failures } from "./admin/failures";
+import { Lessons } from "./admin/lessons";
+import { Overview } from "./admin/overview";
+import {
+  Chip,
+  count,
+  errorCode,
+  errorMessage,
+  FIELD,
+  num,
+  PRIMARY,
+  SECONDARY,
+} from "./admin/ui";
 
 const convexUrl: string | undefined = import.meta.env.PUBLIC_CONVEX_URL;
 // `expectAuth` holds every query until the Better Auth token is attached, so an
@@ -58,66 +62,53 @@ const AuthProvider = ConvexBetterAuthProvider as unknown as (props: {
   client: ConvexReactClient;
 }) => ReactNode;
 
-/** Arabic-friendly copy for whatever a Convex function threw. */
-/**
- * Server errors carry `{ code, message }` so the UI branches on the code rather
- * than on the prose — see `convex/lib/auth.ts`.
- */
-const errorData = (
-  error: unknown
-): { code?: string; message?: string } | null => {
-  if (!(error instanceof ConvexError)) {
-    return null;
-  }
-
-  const { data } = error;
-
-  if (typeof data === "string") {
-    return { message: data };
-  }
-
-  if (typeof data === "object" && data !== null) {
-    const { code, message } = data as { code?: unknown; message?: unknown };
-
-    return {
-      code: typeof code === "string" ? code : undefined,
-      message: typeof message === "string" ? message : undefined,
-    };
-  }
-
-  return null;
-};
-
-const errorCode = (error: unknown): string | undefined =>
-  errorData(error)?.code;
-
-const errorMessage = (error: unknown): string => {
-  const data = errorData(error);
-
-  if (data?.message) {
-    return data.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "حدث خطأ غير متوقع.";
-};
-
 const SIGN_IN_ERRORS: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   USER_NOT_FOUND: "لا يوجد حساب بهذا البريد الإلكتروني.",
 };
 
-const signInMessage = (code?: string, message?: string): string => {
-  const known = code ? SIGN_IN_ERRORS[code] : undefined;
-
-  return known ?? message ?? "تعذّر تسجيل الدخول. حاول مرة أخرى.";
-};
-
 const signOut = () => {
   authClient.signOut();
+};
+
+const PANELS = [
+  { icon: Gauge, id: "overview", label: "نظرة عامة" },
+  { icon: GraduationCap, id: "lessons", label: "الدروس" },
+  { icon: FileText, id: "articles", label: "المقالات" },
+  { icon: AlertTriangle, id: "failures", label: "الإخفاقات" },
+  { icon: BookMarked, id: "books", label: "الكتب" },
+] as const;
+
+type PanelId = (typeof PANELS)[number]["id"];
+
+const HASH_PREFIX = /^#\/?/;
+
+const isPanelId = (value: string): value is PanelId =>
+  PANELS.some((panel) => panel.id === value);
+
+/** The panel named by `#/<id>`, defaulting to the overview. */
+const usePanel = (): [PanelId, (id: PanelId) => void] => {
+  const [panel, setPanel] = useState<PanelId>("overview");
+
+  useEffect(() => {
+    const read = () => {
+      const id = window.location.hash.replace(HASH_PREFIX, "");
+
+      setPanel(isPanelId(id) ? id : "overview");
+    };
+
+    read();
+    window.addEventListener("hashchange", read);
+
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+
+  return [
+    panel,
+    (id: PanelId) => {
+      window.location.hash = `#/${id}`;
+    },
+  ];
 };
 
 const SignInCard = (): ReactNode => {
@@ -142,7 +133,13 @@ const SignInCard = (): ReactNode => {
     setPending(false);
 
     if (result.error) {
-      setError(signInMessage(result.error.code, result.error.message));
+      const known = result.error.code
+        ? SIGN_IN_ERRORS[result.error.code]
+        : undefined;
+
+      setError(
+        known ?? result.error.message ?? "تعذّر تسجيل الدخول. حاول مرة أخرى."
+      );
     }
   };
 
@@ -158,7 +155,7 @@ const SignInCard = (): ReactNode => {
           </label>
           <input
             autoComplete="email"
-            className={FIELD}
+            className={`${FIELD} mt-2`}
             dir="ltr"
             id="sign-in-email"
             onChange={handleEmail}
@@ -177,7 +174,7 @@ const SignInCard = (): ReactNode => {
           </label>
           <input
             autoComplete="current-password"
-            className={FIELD}
+            className={`${FIELD} mt-2`}
             dir="ltr"
             id="sign-in-password"
             onChange={handlePassword}
@@ -192,7 +189,7 @@ const SignInCard = (): ReactNode => {
         </p>
 
         <button
-          className={`${PRIMARY} mt-2 w-full justify-center disabled:opacity-60`}
+          className={`${PRIMARY} mt-2 w-full`}
           disabled={pending}
           type="submit"
         >
@@ -203,49 +200,29 @@ const SignInCard = (): ReactNode => {
   );
 };
 
-const Header = ({ email }: { email: string }): ReactNode => (
-  <header className="mt-10 flex flex-wrap items-center justify-between gap-3">
-    <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-      لوحة التحكم
-    </h1>
-    <div className="flex items-center gap-3">
-      <span className="text-muted text-sm" dir="ltr">
-        {email}
-      </span>
-      <button className={SECONDARY} onClick={signOut} type="button">
-        تسجيل الخروج
-      </button>
-    </div>
-  </header>
-);
-
 /**
- * `books.listAll` throws for a signed-in user who is not on the `ADMIN_EMAILS`
- * allowlist; that case gets its own copy, anything else stays generic.
+ * A signed-in account that is not on the `ADMIN_EMAILS` allowlist gets its own
+ * copy — that is the one failure the operator can actually act on.
  */
-const LoadFailure = ({
+const Forbidden = ({
   email,
   error,
 }: {
   email: string;
   error: Error;
 }): ReactNode => {
-  const message = errorMessage(error);
   const forbidden = errorCode(error) === "FORBIDDEN";
 
   return (
-    <section className="card mt-6 p-5">
-      <h2 className="font-semibold text-lg">
-        {forbidden ? "ليس لديك صلاحية الوصول" : "تعذّر تحميل الكتب"}
-      </h2>
+    <section className="card mx-auto mt-16 max-w-lg p-6">
+      <h1 className="font-semibold text-lg">
+        {forbidden ? "ليس لديك صلاحية الوصول" : "تعذّر فتح لوحة التحكم"}
+      </h1>
       <p className="mt-2 text-muted leading-8">
         {forbidden
           ? `الحساب ${email} ليس ضمن قائمة المشرفين. سجّل الخروج ثم ادخل بحساب مشرف.`
-          : "حدث خطأ أثناء جلب البيانات من الخادم."}
+          : errorMessage(error)}
       </p>
-      {forbidden ? null : (
-        <p className="mt-2 break-words text-muted text-sm">{message}</p>
-      )}
       <button className={`${SECONDARY} mt-4`} onClick={signOut} type="button">
         تسجيل الخروج
       </button>
@@ -253,322 +230,152 @@ const LoadFailure = ({
   );
 };
 
-const IconButton = ({
-  children,
-  disabled,
-  label,
-  onClick,
-}: {
-  children: ReactNode;
-  disabled?: boolean;
-  label: string;
-  onClick: () => void;
-}): ReactNode => (
-  <button
-    aria-label={label}
-    className={ICON_BUTTON}
-    disabled={disabled}
-    onClick={onClick}
-    title={label}
-    type="button"
-  >
-    {children}
-  </button>
-);
+/** Live badge counts beside the nav labels, so a problem is visible from anywhere. */
+const useBadges = (): Partial<Record<PanelId, Badge>> => {
+  const pulse = useQuery({ args: {}, query: api.admin.pulse });
+  const review = useQuery({ args: {}, query: api.admin.reviewCounts });
 
-const StateChip = ({ published }: { published: boolean }): ReactNode =>
-  published ? (
-    <span className="inline-flex items-center rounded-lg bg-accent-soft px-2 py-1 text-accent text-xs">
-      منشور
-    </span>
-  ) : (
-    <span className="inline-flex items-center rounded-lg bg-surface-2 px-2 py-1 text-muted text-xs">
-      مسودة
-    </span>
-  );
+  const badges: Partial<Record<PanelId, Badge>> = {};
 
-interface RowHandlers {
-  onCancelDelete: () => void;
-  onDelete: (book: Doc<"books">) => void;
-  onEdit: (book: Doc<"books">) => void;
-  onMove: (index: number, delta: number) => void;
-  onToggle: (book: Doc<"books">) => void;
-}
-
-interface RowProps {
-  book: Doc<"books">;
-  confirming: boolean;
-  handlers: RowHandlers;
-  index: number;
-  total: number;
-}
-
-const RowActions = ({
-  book,
-  confirming,
-  handlers,
-  index,
-  total,
-}: RowProps): ReactNode => {
-  const handleDelete = () => handlers.onDelete(book);
-  const handleEdit = () => handlers.onEdit(book);
-  const handleToggle = () => handlers.onToggle(book);
-  const handleUp = () => handlers.onMove(index, -1);
-  const handleDown = () => handlers.onMove(index, 1);
-
-  if (confirming) {
-    return (
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="text-muted text-sm">هل تحذف «{book.title}»؟</span>
-        <button className={DANGER} onClick={handleDelete} type="button">
-          تأكيد الحذف
-        </button>
-        <button
-          className={SECONDARY}
-          onClick={handlers.onCancelDelete}
-          type="button"
-        >
-          إلغاء
-        </button>
-      </div>
-    );
+  if (pulse.status === "success" && pulse.data.failures.total > 0) {
+    badges.failures = { alert: true, text: num(pulse.data.failures.total) };
   }
 
+  if (review.status === "success" && review.data.needsReview.count > 0) {
+    badges.lessons = { alert: false, text: count(review.data.needsReview) };
+  }
+
+  return badges;
+};
+
+interface Badge {
+  alert: boolean;
+  text: string;
+}
+
+const NavButton = ({
+  badge,
+  current,
+  id,
+  icon: Icon,
+  label,
+  onSelect,
+}: {
+  badge?: Badge;
+  current: boolean;
+  icon: (typeof PANELS)[number]["icon"];
+  id: PanelId;
+  label: string;
+  onSelect: (id: PanelId) => void;
+}): ReactNode => {
+  const handleClick = () => onSelect(id);
+
   return (
-    <div className="flex items-center justify-end gap-1">
-      <IconButton
-        label={book.published ? "إلغاء النشر" : "نشر"}
-        onClick={handleToggle}
-      >
-        {book.published ? <Eye /> : <EyeOff />}
-      </IconButton>
-      <IconButton label="تعديل" onClick={handleEdit}>
-        <Pencil />
-      </IconButton>
-      <IconButton disabled={index === 0} label="تحريك لأعلى" onClick={handleUp}>
-        <ChevronUp />
-      </IconButton>
-      <IconButton
-        disabled={index === total - 1}
-        label="تحريك لأسفل"
-        onClick={handleDown}
-      >
-        <ChevronDown />
-      </IconButton>
-      <IconButton label="حذف" onClick={handleDelete}>
-        <Trash2 />
-      </IconButton>
-    </div>
+    <button
+      aria-current={current ? "page" : undefined}
+      className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors ${
+        current
+          ? "bg-accent-soft font-medium text-accent"
+          : "text-muted hover:bg-surface-2 hover:text-fg"
+      }`}
+      onClick={handleClick}
+      type="button"
+    >
+      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      <span className="flex-1 text-start">{label}</span>
+      {badge && (
+        <Chip tone={badge.alert ? "danger" : "warn"}>
+          <span className="digits">{badge.text}</span>
+        </Chip>
+      )}
+    </button>
   );
 };
 
-const BooksManager = ({ books: loaded }: { books: Doc<"books">[] }) => {
-  const create = useMutation(api.books.create);
-  const update = useMutation(api.books.update);
-  const remove = useMutation(api.books.remove);
-  const reorder = useMutation(api.books.reorder);
+const Shell = ({ email }: { email: string }): ReactNode => {
+  const [panel, go] = usePanel();
+  const [open, setOpen] = useState(false);
+  const badges = useBadges();
+  const pulse = useQuery({ args: {}, query: api.admin.pulse });
 
-  const [editing, setEditing] = useState<Doc<"books"> | "new" | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [confirmingId, setConfirmingId] = useState<Id<"books"> | null>(null);
+  if (pulse.status === "error") {
+    return <Forbidden email={email} error={pulse.error} />;
+  }
 
-  const books = [...loaded].sort((a, b) => a.order - b.order);
+  const active = PANELS.find((item) => item.id === panel) ?? PANELS[0];
 
-  const run = async (action: () => Promise<unknown>) => {
-    setActionError(null);
-
-    try {
-      await action();
-    } catch (caught) {
-      setActionError(errorMessage(caught));
-    }
+  const select = (id: PanelId) => {
+    go(id);
+    setOpen(false);
   };
 
-  const handleAdd = () => {
-    setFormError(null);
-    setEditing("new");
-  };
+  const handleMenu = () => setOpen((was) => !was);
 
-  const handleCancel = () => setEditing(null);
-
-  const handleSubmit = async (values: BookInput) => {
-    setSaving(true);
-    setFormError(null);
-
-    try {
-      if (editing && editing !== "new") {
-        await update({ id: editing._id, ...values });
-      } else {
-        await create(values);
-      }
-
-      setEditing(null);
-    } catch (caught) {
-      setFormError(errorMessage(caught));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handlers: RowHandlers = {
-    onCancelDelete: () => setConfirmingId(null),
-    // First click arms the row, second click deletes.
-    onDelete: (book) => {
-      if (confirmingId !== book._id) {
-        setConfirmingId(book._id);
-        return;
-      }
-
-      setConfirmingId(null);
-      run(() => remove({ id: book._id }));
-    },
-    onEdit: (book) => {
-      setFormError(null);
-      setEditing(book);
-    },
-    onMove: (index, delta) => {
-      const target = index + delta;
-      const next = [...books];
-      const current = next[index];
-      const swapped = next[target];
-
-      if (!(current && swapped)) {
-        return;
-      }
-
-      next[index] = swapped;
-      next[target] = current;
-      run(() => reorder({ ids: next.map((book) => book._id) }));
-    },
-    onToggle: (book) =>
-      run(() => update({ id: book._id, published: !book.published })),
-  };
+  const nav = (
+    <nav aria-label="أقسام لوحة التحكم" className="flex flex-col gap-1">
+      {PANELS.map((item) => (
+        <NavButton
+          badge={badges[item.id]}
+          current={item.id === panel}
+          icon={item.icon}
+          id={item.id}
+          key={item.id}
+          label={item.label}
+          onSelect={select}
+        />
+      ))}
+    </nav>
+  );
 
   return (
-    <>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-muted text-sm">
-          <span className="digits">{books.length}</span> كتابًا
-        </p>
-        <button className={PRIMARY} onClick={handleAdd} type="button">
-          <Plus aria-hidden="true" className="size-4" />
-          إضافة كتاب
-        </button>
+    <div className="gap-8 pb-10 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)]">
+      <div className="lg:sticky lg:top-20 lg:self-start lg:pt-8">
+        <div className="flex items-center justify-between gap-3 pt-6 lg:hidden">
+          <h1 className="font-semibold text-xl tracking-tight">
+            {active.label}
+          </h1>
+          <button
+            aria-expanded={open}
+            aria-label="أقسام لوحة التحكم"
+            className={SECONDARY}
+            onClick={handleMenu}
+            type="button"
+          >
+            <Menu aria-hidden="true" className="size-4" />
+            الأقسام
+          </button>
+        </div>
+
+        <div className={`mt-4 lg:mt-0 lg:block ${open ? "block" : "hidden"}`}>
+          {nav}
+          <div className="mt-4 border-border border-t pt-4">
+            <p className="truncate px-3 text-muted text-xs" dir="ltr">
+              {email}
+            </p>
+            <button
+              className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-muted text-sm transition-colors hover:bg-surface-2 hover:text-fg"
+              onClick={signOut}
+              type="button"
+            >
+              <LogOut aria-hidden="true" className="size-4" />
+              تسجيل الخروج
+            </button>
+          </div>
+        </div>
       </div>
 
-      {actionError && <p className={BANNER}>{actionError}</p>}
-
-      {editing && (
-        <BookForm
-          book={editing === "new" ? null : editing}
-          error={formError}
-          key={editing === "new" ? "new" : editing._id}
-          onCancel={handleCancel}
-          onSubmit={handleSubmit}
-          pending={saving}
-        />
-      )}
-
-      {books.length === 0 && (
-        <p className="card mt-6 p-5 text-muted">لا توجد كتب بعد.</p>
-      )}
-
-      <table className="mt-6 hidden w-full text-sm sm:table">
-        <thead className="text-muted text-xs">
-          <tr>
-            <th className="pb-2 text-start font-medium" scope="col">
-              العنوان
-            </th>
-            <th className="pb-2 text-start font-medium" scope="col">
-              المُعرِّف
-            </th>
-            <th className="pb-2 text-start font-medium" scope="col">
-              التاريخ
-            </th>
-            <th className="pb-2 text-start font-medium" scope="col">
-              الحالة
-            </th>
-            <th className="pb-2 text-end font-medium" scope="col">
-              إجراءات
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {books.map((book, index) => (
-            <tr className={book.published ? "" : "text-muted"} key={book._id}>
-              <td className={`${CELL} font-medium`}>{book.title}</td>
-              <td className={CELL}>
-                <span className="text-muted text-xs" dir="ltr">
-                  {book.slug}
-                </span>
-              </td>
-              <td className={CELL}>
-                <span className="digits text-xs">{book.date ?? "—"}</span>
-              </td>
-              <td className={CELL}>
-                <StateChip published={book.published} />
-              </td>
-              <td className={`${CELL} pe-0`}>
-                <RowActions
-                  book={book}
-                  confirming={confirmingId === book._id}
-                  handlers={handlers}
-                  index={index}
-                  total={books.length}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <ul className="mt-6 space-y-3 sm:hidden">
-        {books.map((book, index) => (
-          <li
-            className={`card p-4 ${book.published ? "" : "text-muted"}`}
-            key={book._id}
-          >
-            <h2 className="font-medium">{book.title}</h2>
-            <p className="mt-1 text-muted text-xs" dir="ltr">
-              {book.slug}
-            </p>
-            <p className="mt-2 flex items-center gap-2">
-              <StateChip published={book.published} />
-              <span className="digits text-muted text-xs">
-                {book.date ?? "—"}
-              </span>
-            </p>
-            <div className="mt-2">
-              <RowActions
-                book={book}
-                confirming={confirmingId === book._id}
-                handlers={handlers}
-                index={index}
-                total={books.length}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-};
-
-const Dashboard = ({ email }: { email: string }): ReactNode => {
-  const state = useQuery({ args: {}, query: api.books.listAll });
-
-  return (
-    <div className="pb-10">
-      <Header email={email} />
-      {state.status === "pending" && (
-        <p className="mt-6 text-muted">جارٍ التحميل…</p>
-      )}
-      {state.status === "error" && (
-        <LoadFailure email={email} error={state.error} />
-      )}
-      {state.status === "success" && <BooksManager books={state.data} />}
+      <div className="min-w-0 pt-6 lg:pt-8">
+        <h1 className="hidden font-semibold text-2xl tracking-tight lg:block">
+          {active.label}
+        </h1>
+        <div className="mt-6">
+          {panel === "overview" && <Overview />}
+          {panel === "lessons" && <Lessons />}
+          {panel === "articles" && <Articles />}
+          {panel === "failures" && <Failures />}
+          {panel === "books" && <Books email={email} />}
+        </div>
+      </div>
     </div>
   );
 };
@@ -584,7 +391,7 @@ const AuthGate = (): ReactNode => {
     return <SignInCard />;
   }
 
-  return <Dashboard email={session.user.email} />;
+  return <Shell email={session.user.email} />;
 };
 
 const AdminDashboard = (): ReactNode => {

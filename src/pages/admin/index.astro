@@ -1,4 +1,9 @@
 ---
+// Vidstack's stylesheets are imported here rather than inside the React island:
+// the island is `client:only`, so CSS imported from it lands in a client chunk
+// that arrives after first paint and flashes unstyled controls.
+import "@vidstack/react/player/styles/default/theme.css";
+import "@vidstack/react/player/styles/default/layouts/audio.css";
 import AdminDashboard from "../../islands/admin-dashboard";
 import Base from "../../layouts/Base.astro";
 ---

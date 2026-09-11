@@ -31,6 +31,10 @@ type Env = {
   readonly CONVEX_CLOUD_URL: string;
   readonly CONVEX_SITE_URL: string;
   readonly ADMIN_EMAILS: string;
+  readonly R2_ACCESS_KEY_ID: string | undefined;
+  readonly R2_ARCHIVE_BUCKET: string | undefined;
+  readonly R2_ENDPOINT: string | undefined;
+  readonly R2_SECRET_ACCESS_KEY: string | undefined;
   readonly SITE_URL: string;
 };
 

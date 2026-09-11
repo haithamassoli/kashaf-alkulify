@@ -41,7 +41,8 @@ const schema = defineSchema({
     titleSource: v.string(),
   })
     .index("by_message", ["messageId"])
-    .index("by_channel_date", ["channelId", "date"]),
+    .index("by_channel_date", ["channelId", "date"])
+    .searchIndex("search_title", { searchField: "normalizedTitle" }),
   books: defineTable(bookFields)
     .index("by_slug", ["slug"])
     .index("by_published_and_order", ["published", "order"]),
@@ -62,7 +63,9 @@ const schema = defineSchema({
     stage: v.string(),
   })
     .index("by_stage_resolved", ["stage", "resolved"])
-    .index("by_stage_ref", ["stage", "refKey"]),
+    .index("by_stage_ref", ["stage", "refKey"])
+    // The dashboard drains every stage at once, newest first.
+    .index("by_resolved_and_last_tried", ["resolved", "lastTriedAt"]),
 
   lessonParts: defineTable({
     durationMs: v.number(),
@@ -91,6 +94,12 @@ const schema = defineSchema({
   }).index("by_lesson", ["lessonId"]),
 
   lessons: defineTable({
+    /**
+     * When a human last approved this lesson (report §8 gap). Compared against
+     * a source message's `editDate` to detect an approved lesson whose source
+     * changed underneath it.
+     */
+    approvedAt: v.optional(v.number()),
     // Ordered part sha256s only (§0 amendment 3).
     assemblyHash: v.string(),
     channelId: v.optional(v.id("channels")), // null for non-Telegram sources
@@ -124,7 +133,16 @@ const schema = defineSchema({
     titleParserVersion: v.string(),
   })
     .index("by_lesson_key", ["lessonKey"])
-    .index("by_review_status", ["reviewStatus"]),
+    .index("by_review_status", ["reviewStatus"])
+    // The review queue is served least-confident first (report §6).
+    .index("by_review_status_and_confidence", [
+      "reviewStatus",
+      "groupingConfidence",
+    ])
+    .searchIndex("search_title", {
+      filterFields: ["reviewStatus"],
+      searchField: "normalizedTitle",
+    }),
 
   // One row per unique binary. Identity = sha256.
   mediaObjects: defineTable({
@@ -170,7 +188,9 @@ const schema = defineSchema({
       v.literal("done"),
       v.literal("failed")
     ),
-  }).index("by_sha256_config", ["sha256", "configHash"]),
+  })
+    .index("by_sha256_config", ["sha256", "configHash"])
+    .index("by_status", ["status"]),
 
   // Singleton per stage; uniqueness via acquirePipelineStage.
   pipelineLocks: defineTable({
