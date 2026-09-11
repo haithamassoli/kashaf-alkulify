@@ -12,6 +12,8 @@ import type * as auth from "../auth.js";
 import type * as books from "../books.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as mutations from "../mutations.js";
+import type * as queries from "../queries.js";
 import type * as seed from "../seed.js";
 
 import type {
@@ -25,6 +27,8 @@ declare const fullApi: ApiFromModules<{
   books: typeof books;
   http: typeof http;
   "lib/auth": typeof lib_auth;
+  mutations: typeof mutations;
+  queries: typeof queries;
   seed: typeof seed;
 }>;
 
