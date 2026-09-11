@@ -10,8 +10,15 @@ import {
 } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { internalQuery, mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
+import { recompose, retireLesson, retireMediaIfUnused } from "./lib/lessons";
+import { normalize } from "./lib/normalize";
 import schema from "./schema";
 
 /**
@@ -37,10 +44,12 @@ const lessonSummary = v.object({
   id: v.id("lessons"),
   lessonKey: v.string(),
   partCount: v.number(),
+  partsLocked: v.boolean(),
   rawTitle: v.string(),
   reviewStatus: REVIEW_STATUS,
   seriesEpisode: v.union(v.number(), v.null()),
   seriesName: v.union(v.string(), v.null()),
+  titleLocked: v.boolean(),
   titleParseConfidence: v.number(),
 });
 
@@ -52,10 +61,12 @@ const toSummary = (row: Doc<"lessons">) => ({
   id: row._id,
   lessonKey: row.lessonKey,
   partCount: row.partCount,
+  partsLocked: row.partsLocked ?? false,
   rawTitle: row.rawTitle,
   reviewStatus: row.reviewStatus,
   seriesEpisode: row.seriesEpisode ?? null,
   seriesName: row.seriesName ?? null,
+  titleLocked: row.titleLocked ?? false,
   titleParseConfidence: row.titleParseConfidence,
 });
 
@@ -199,6 +210,7 @@ export const reviewCounts = query({
           ctx.db
             .query("lessons")
             .withIndex("by_review_status", (q) => q.eq("reviewStatus", status))
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .take(COUNT_CAP)
         )
       )
@@ -244,6 +256,7 @@ export const lessons = query({
 
           return status === null ? search : search.eq("reviewStatus", status);
         })
+        .filter((q) => q.eq(q.field("deletedAt"), undefined))
         .paginate(args.paginationOpts);
 
       return { ...hits, page: hits.page.map(toSummary) };
@@ -254,12 +267,14 @@ export const lessons = query({
         ? await ctx.db
             .query("lessons")
             .order("desc")
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .paginate(args.paginationOpts)
         : await ctx.db
             .query("lessons")
             .withIndex("by_review_status_and_confidence", (q) =>
               q.eq("reviewStatus", status)
             )
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .paginate(args.paginationOpts);
 
     return { ...found, page: found.page.map(toSummary) };
@@ -275,7 +290,9 @@ export const lesson = query({
 
     const row = await ctx.db.get("lessons", args.id);
 
-    if (row === null) {
+    // A deleted lesson is gone as far as the dashboard is concerned; the row
+    // only survives as the Organizer's tombstone.
+    if (row === null || row.deletedAt !== undefined) {
       return null;
     }
 
@@ -295,6 +312,16 @@ export const lesson = query({
         continue;
       }
 
+      // A repost puts the same bytes under two lessons. The delete button has
+      // to say so before it runs, because a shared binary survives the delete
+      // and an unshared one is gone from R2 for good.
+      const uses = await ctx.db
+        .query("lessonParts")
+        .withIndex("by_media_object", (q) =>
+          q.eq("mediaObjectId", part.mediaObjectId)
+        )
+        .take(2);
+
       media.push({
         durationMs: part.durationMs,
         ext: object.ext,
@@ -304,6 +331,7 @@ export const lesson = query({
         partId: part._id,
         r2Key: object.r2Key,
         sha256: object.sha256,
+        shared: uses.length > 1,
         sizeBytes: object.sizeBytes,
       });
     }
@@ -327,12 +355,14 @@ export const lesson = query({
       lessonTranscriptR2Key: row.lessonTranscriptR2Key ?? null,
       normalizedTitle: row.normalizedTitle,
       parts: media,
+      partsLocked: row.partsLocked ?? false,
       sources: sources.map((source) => ({
         id: source._id,
         isPrimary: source.isPrimary,
         sourceType: source.sourceType,
         url: source.url,
       })),
+      titleLocked: row.titleLocked ?? false,
     };
   },
 });
@@ -410,72 +440,204 @@ export const setReviewStatus = mutation({
 });
 
 /**
- * Reorders a lesson's parts. `order` and `offsetMs` are both rewritten so the
- * virtual timeline the player concatenates over stays contiguous, and
- * `assemblyHash` is recomputed from the new part order — which is what makes the
- * transcript builder rebuild this lesson and nothing else.
+ * Reorders a lesson's parts. `recompose` rewrites `order` and `offsetMs` so the
+ * virtual timeline the player concatenates over stays contiguous, recomputes
+ * `assemblyHash` from the new order — which is what makes the transcript builder
+ * rebuild this lesson and nothing else — and locks the composition so the next
+ * Organizer run cannot put the old order back.
  */
 export const reorderParts = mutation({
   args: { id: v.id("lessons"), partIds: v.array(v.id("lessonParts")) },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    await recompose(ctx, args.id, args.partIds);
+    // A hand-ordered lesson is reviewed, not auto-grouped.
+    await ctx.db.patch("lessons", args.id, { reviewStatus: "needs_review" });
+
+    return null;
+  },
+  returns: v.null(),
+});
+
+/**
+ * Renames a lesson, and with it the series it belongs to.
+ *
+ * `normalizedTitle` is rewritten from the same contract the Organizer uses, so a
+ * renamed lesson is findable by the search index immediately. `titleLocked` is
+ * what makes the rename outlive the next pipeline run: the Organizer keeps
+ * owning every other field on the row and stops owning this one.
+ */
+export const setLessonTitle = mutation({
+  args: {
+    id: v.id("lessons"),
+    rawTitle: v.string(),
+    seriesEpisode: v.union(v.number(), v.null()),
+    seriesName: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const rawTitle = args.rawTitle.trim();
+    const seriesName = args.seriesName?.trim() || null;
+
+    await ctx.db.patch("lessons", args.id, {
+      normalizedSeriesName:
+        seriesName === null ? undefined : normalize(seriesName),
+      normalizedTitle: normalize(rawTitle),
+      rawTitle,
+      seriesEpisode: args.seriesEpisode ?? undefined,
+      seriesName: seriesName ?? undefined,
+      // A hand-written title is as good as it gets; the review queue sorts by
+      // this and should stop offering a lesson a human has already named.
+      titleLocked: true,
+      titleParseConfidence: 1,
+    });
+
+    return null;
+  },
+  returns: v.null(),
+});
+
+/**
+ * Moves one part from the lesson it is in to another, appending it at the end.
+ *
+ * This is the repair for a lesson the grouper split in two: the stray parts get
+ * carried over one at a time, and both lessons come out of it with a contiguous
+ * timeline and a locked composition. A lesson left with no parts is retired —
+ * an empty lesson is not a lesson, and leaving one behind would put a silent row
+ * in the review queue forever.
+ */
+export const movePart = mutation({
+  args: { partId: v.id("lessonParts"), toLessonId: v.id("lessons") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const part = await ctx.db.get("lessonParts", args.partId);
+
+    if (part === null) {
+      throw new Error(`no lessonPart ${args.partId}`);
+    }
+
+    if (part.lessonId === args.toLessonId) {
+      return null;
+    }
+
+    const target = await ctx.db.get("lessons", args.toLessonId);
+
+    if (target === null || target.deletedAt !== undefined) {
+      throw new Error(`no lesson ${args.toLessonId}`);
+    }
+
+    const from = part.lessonId;
+    const last = await ctx.db
+      .query("lessonParts")
+      .withIndex("by_lesson_order", (q) => q.eq("lessonId", args.toLessonId))
+      .order("desc")
+      .first();
+
+    // `recompose` fixes the arithmetic; this only has to land the row past the
+    // end of the target so the sort it reads puts the part last.
+    await ctx.db.patch("lessonParts", args.partId, {
+      lessonId: args.toLessonId,
+      offsetMs: 0,
+      order: (last?.order ?? -1) + 1,
+    });
+
+    const left = await recompose(ctx, from);
+
+    await recompose(ctx, args.toLessonId);
+    await ctx.db.patch("lessons", args.toLessonId, {
+      reviewStatus: "needs_review",
+    });
+
+    if (left === 0) {
+      await retireLesson(ctx, from);
+    } else {
+      await ctx.db.patch("lessons", from, { reviewStatus: "needs_review" });
+    }
+
+    return null;
+  },
+  returns: v.null(),
+});
+
+/**
+ * Deletes one audio part, and the binary behind it when nothing else plays it.
+ *
+ * Internal, and run from `media.purge`: the R2 blob has to go in the same breath
+ * as the row, and only an action can reach R2. The rows go first — an orphaned
+ * blob is a cleanup job, whereas a row pointing at a blob that is already gone
+ * is a broken player.
+ *
+ * @returns the R2 keys the action must delete.
+ */
+export const deletePartRows = internalMutation({
+  args: { partId: v.id("lessonParts") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const part = await ctx.db.get("lessonParts", args.partId);
+
+    if (part === null) {
+      return { r2Keys: [] };
+    }
+
+    const { lessonId, mediaObjectId } = part;
+
+    await ctx.db.delete("lessonParts", args.partId);
+
+    if ((await recompose(ctx, lessonId)) === 0) {
+      await retireLesson(ctx, lessonId);
+    }
+
+    const key = await retireMediaIfUnused(ctx, mediaObjectId);
+
+    return { r2Keys: key === null ? [] : [key] };
+  },
+  returns: v.object({ r2Keys: v.array(v.string()) }),
+});
+
+/**
+ * Deletes a whole lesson: parts, sources, and every binary no other lesson is
+ * still playing. The lesson row itself survives as its own tombstone — see
+ * `lessons.deletedAt` in the schema.
+ *
+ * @returns the R2 keys the action must delete.
+ */
+export const deleteLessonRows = internalMutation({
+  args: { id: v.id("lessons") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const row = await ctx.db.get("lessons", args.id);
+
+    if (row === null || row.deletedAt !== undefined) {
+      return { r2Keys: [] };
+    }
 
     const parts = await ctx.db
       .query("lessonParts")
       .withIndex("by_lesson_order", (q) => q.eq("lessonId", args.id))
       .collect();
 
-    if (parts.length !== args.partIds.length) {
-      throw new Error(
-        `reorder must list every part: got ${args.partIds.length}, lesson has ${parts.length}`
-      );
+    // Retire the lesson first: `retireMediaIfUnused` asks whether any part still
+    // references the binary, and the parts about to be deleted must not count
+    // as that reference.
+    await retireLesson(ctx, args.id);
+
+    const r2Keys = [];
+
+    for (const part of parts) {
+      const key = await retireMediaIfUnused(ctx, part.mediaObjectId);
+
+      if (key !== null) {
+        r2Keys.push(key);
+      }
     }
 
-    const byId = new Map(parts.map((part) => [part._id, part]));
-    let offsetMs = 0;
-    const shas: string[] = [];
-
-    for (const [order, partId] of args.partIds.entries()) {
-      const part = byId.get(partId);
-
-      if (part === undefined) {
-        throw new Error(`part ${partId} does not belong to lesson ${args.id}`);
-      }
-
-      const object = await ctx.db.get("mediaObjects", part.mediaObjectId);
-
-      if (object === null) {
-        throw new Error(`part ${partId} points at a missing mediaObject`);
-      }
-
-      await ctx.db.patch("lessonParts", partId, { offsetMs, order });
-      shas.push(object.sha256);
-      offsetMs += part.durationMs;
-    }
-
-    // Must match `assembly_hash` in the pipeline (organize.py): sha256 of the
-    // canonical JSON of the ordered part sha256s. For an array of hex strings,
-    // Python's `json.dumps(..., separators=(",", ":"))` and `JSON.stringify`
-    // produce byte-identical output — anything else silently forks the lesson's
-    // identity and forces a needless transcript rebuild.
-    const digest = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(JSON.stringify(shas))
-    );
-    const assemblyHash = [...new Uint8Array(digest)]
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
-
-    await ctx.db.patch("lessons", args.id, {
-      assemblyHash,
-      durationMs: offsetMs,
-      // A hand-ordered lesson is reviewed, not auto-grouped.
-      reviewStatus: "needs_review",
-    });
-
-    return null;
+    return { r2Keys };
   },
-  returns: v.null(),
+  returns: v.object({ r2Keys: v.array(v.string()) }),
 });
 
 /** Marks a failure handled without waiting for the pipeline to retry it. */

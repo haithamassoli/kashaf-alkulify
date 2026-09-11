@@ -13,6 +13,8 @@ import type * as auth from "../auth.js";
 import type * as books from "../books.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_lessons from "../lib/lessons.js";
+import type * as lib_normalize from "../lib/normalize.js";
 import type * as media from "../media.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
@@ -30,6 +32,8 @@ declare const fullApi: ApiFromModules<{
   books: typeof books;
   http: typeof http;
   "lib/auth": typeof lib_auth;
+  "lib/lessons": typeof lib_lessons;
+  "lib/normalize": typeof lib_normalize;
   media: typeof media;
   mutations: typeof mutations;
   queries: typeof queries;

@@ -148,14 +148,41 @@ export const upsertLessonByKey = mutation({
     // §0 amendment 1 / §4.7: an approved composition is frozen against reruns.
     // A source change demotes it to needs_review elsewhere; it is never
     // silently recomposed here.
-    if (existing.reviewStatus === "approved") {
+    //
+    // A deleted lesson and a hand-edited composition are frozen for the same
+    // reason and by the same line. The deleted row is kept precisely so this
+    // lookup finds it: `lessonKey` is deterministic, so without the tombstone
+    // the next scan of the channel would compose the lesson straight back.
+    if (
+      existing.reviewStatus === "approved" ||
+      existing.deletedAt !== undefined ||
+      existing.partsLocked === true
+    ) {
       return { created: false, id: existing._id, skipped: true };
     }
     // A new assemblyHash used to invalidate the merged artifact here. Plan
     // v2.4 removed merging, so the composition is just written through; the
     // lesson transcript and its chunks are still invalidated by identity,
     // because their R2 keys embed the assemblyHash.
-    await ctx.db.patch(existing._id, args);
+    //
+    // A renamed lesson keeps its name: the title fields are dropped from the
+    // patch and every other field is still the Organizer's to own, so a rename
+    // survives a rerun without freezing the composition along with it.
+    const {
+      lessonPartLabel,
+      normalizedSeriesName,
+      normalizedTitle,
+      rawTitle,
+      seriesEpisode,
+      seriesName,
+      titleParseConfidence,
+      titleParserVersion,
+      ...composition
+    } = args;
+    await ctx.db.patch(
+      existing._id,
+      existing.titleLocked === true ? composition : args
+    );
     return { created: false, id: existing._id, skipped: false };
   },
 });
@@ -594,6 +621,17 @@ export const replaceLessonParts = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const lesson = await ctx.db.get(args.lessonId);
+    // Same freeze as `upsertLessonByKey`. The Organizer already skips a lesson
+    // that came back `skipped`, so this is the belt behind that brace — it is
+    // the only thing standing between a rerun and an admin's hand edit.
+    if (
+      lesson === null ||
+      lesson.deletedAt !== undefined ||
+      lesson.partsLocked === true
+    ) {
+      return { changed: false, count: 0 };
+    }
     const existing = await ctx.db
       .query("lessonParts")
       .withIndex("by_lesson_order", (q) => q.eq("lessonId", args.lessonId))
@@ -642,6 +680,10 @@ export const replaceLessonSources = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const lesson = await ctx.db.get(args.lessonId);
+    if (lesson === null || lesson.deletedAt !== undefined) {
+      return { changed: false, count: 0 };
+    }
     const existing = await ctx.db
       .query("lessonSources")
       .withIndex("by_lesson", (q) => q.eq("lessonId", args.lessonId))

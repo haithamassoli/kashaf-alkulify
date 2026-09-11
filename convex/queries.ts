@@ -177,6 +177,11 @@ export const mediaObjectsPage = query({
       .take(args.limit);
     const objects = [];
     for (const row of rows) {
+      // Deleted by an admin: the bytes are gone from R2, so transcribing it
+      // could only ever fail. The cursor still advances past it.
+      if (row.deletedAt !== undefined) {
+        continue;
+      }
       const found = await ctx.db
         .query("partTranscripts")
         .withIndex("by_sha256_config", (q) =>
@@ -240,7 +245,13 @@ export const messagesPage = query({
             `integrity error: messageMedia ${link._id} points at a missing mediaObject`
           );
         }
+        // Deleted audio is flagged, never hidden. The Organizer derives
+        // `lessonKey` from which messages carry audio, so dropping a binary here
+        // would move a lesson's identity and compose a duplicate beside it. It
+        // reads the flag at composition time instead, where it costs the lesson
+        // a part and nothing else.
         media.push({
+          deletedAt: object.deletedAt ?? null,
           durationMs: object.durationMs ?? null,
           ext: object.ext,
           mediaObjectId: object._id,
@@ -286,6 +297,11 @@ export const lessonsPage = query({
       .take(args.limit);
     const lessons = [];
     for (const row of rows) {
+      // Deleted by an admin. The row survives only as a tombstone for
+      // `upsertLessonByKey`; nothing downstream should ever see it.
+      if (row.deletedAt !== undefined) {
+        continue;
+      }
       const parts = await ctx.db
         .query("lessonParts")
         .withIndex("by_lesson_order", (q) => q.eq("lessonId", row._id))
@@ -309,15 +325,23 @@ export const lessonsPage = query({
       lessons.push({
         assemblyHash: row.assemblyHash,
         durationMs: row.durationMs,
+        // The Organizer's no-op fast path compares these against the versions
+        // it would stamp, so a version bump still forces every lesson rewritten.
+        groupingVersion: row.groupingVersion,
         id: row._id,
         lessonKey: row.lessonKey,
         lessonTranscriptR2Key: row.lessonTranscriptR2Key ?? null,
         normalizedTitle: row.normalizedTitle,
         parts: withSha,
+        // Both locks ride along so the Organizer can skip a hand-edited lesson
+        // without spending a mutation to be told it is frozen.
+        partsLocked: row.partsLocked ?? false,
         rawTitle: row.rawTitle,
         reviewStatus: row.reviewStatus,
         seriesEpisode: row.seriesEpisode ?? null,
         seriesName: row.seriesName ?? null,
+        titleLocked: row.titleLocked ?? false,
+        titleParserVersion: row.titleParserVersion,
       });
     }
     return {

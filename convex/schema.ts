@@ -76,6 +76,7 @@ const schema = defineSchema({
     order: v.number(),
   })
     .index("by_lesson_order", ["lessonId", "order"])
+    .index("by_media_object", ["mediaObjectId"])
     .index("by_message", ["messageId"]),
 
   lessonSources: defineTable({
@@ -103,6 +104,13 @@ const schema = defineSchema({
     // Ordered part sha256s only (§0 amendment 3).
     assemblyHash: v.string(),
     channelId: v.optional(v.id("channels")), // null for non-Telegram sources
+    /**
+     * Set when an admin deletes the lesson. The row survives its own deletion
+     * on purpose: `lessonKey` is what stops the Organizer from composing this
+     * lesson again the next time the channel is scanned. Nothing reads a
+     * deleted lesson — not the dashboard, not the transcript builder.
+     */
+    deletedAt: v.optional(v.number()),
     durationMs: v.number(),
     firstTelegramMessageId: v.optional(v.id("telegramMessages")),
     groupingConfidence: v.number(),
@@ -120,6 +128,12 @@ const schema = defineSchema({
     normalizedSeriesName: v.optional(v.string()),
     normalizedTitle: v.string(),
     partCount: v.number(),
+    /**
+     * Set when an admin edits the composition (reorder, move a part in or out,
+     * delete a part). A locked composition is frozen against the Organizer the
+     * same way an `approved` one is: a hand edit outranks a rerun, always.
+     */
+    partsLocked: v.optional(v.boolean()),
     rawTitle: v.string(),
     reviewStatus: v.union(
       v.literal("auto"),
@@ -128,6 +142,12 @@ const schema = defineSchema({
     ),
     seriesEpisode: v.optional(v.number()),
     seriesName: v.optional(v.string()),
+    /**
+     * Set when an admin renames the lesson. The Organizer keeps writing every
+     * other field; it just stops overwriting the title fields, so a rename
+     * survives a rerun without freezing the composition with it.
+     */
+    titleLocked: v.optional(v.boolean()),
     titleMessageId: v.optional(v.id("telegramMessages")),
     titleParseConfidence: v.number(),
     titleParserVersion: v.string(),
@@ -148,6 +168,12 @@ const schema = defineSchema({
   mediaObjects: defineTable({
     channelCount: v.optional(v.number()),
     codec: v.optional(v.string()),
+    /**
+     * Set when an admin deletes the audio; the blob is gone from R2 by then.
+     * The row stays so ingest still counts its message as archived and never
+     * re-downloads it, and so every reader can tell "deleted" from "missing".
+     */
+    deletedAt: v.optional(v.number()),
     durationMs: v.optional(v.number()),
     ext: v.string(),
     firstSeenAt: v.number(),

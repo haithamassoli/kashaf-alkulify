@@ -27,14 +27,15 @@
       }
     },
     {
-      // The archive pipeline's mutations and queries, and the dashboard's
-      // read side. A Convex mutation is one
+      // The archive pipeline's mutations and queries, the dashboard's read
+      // side, and the shared lesson-composition helpers. A Convex mutation is one
       // transaction, so its writes are sequential on purpose — order is the
       // invariant (lookup-then-write, offsets recomputed in part order), and
       // Promise.all would trade that for nothing. The rule is right about
       // network I/O and wrong about a transaction body.
       "includes": [
         "convex/admin.ts",
+        "convex/lib/lessons.ts",
         "convex/mutations.ts",
         "convex/queries.ts"
       ],
