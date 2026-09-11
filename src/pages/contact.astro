@@ -1,0 +1,84 @@
+---
+import Base from "../layouts/Base.astro";
+import { breadcrumb, CONTACT_EMAIL, SITE } from "../lib/seo";
+
+const field =
+  "mt-2 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted";
+---
+
+<Base
+  description={`أرسل اقتراحًا أو ملاحظة أو تصحيحًا إلى ${SITE}.`}
+  schema={[breadcrumb([["تواصل واقتراحات", "/contact/"]])]}
+  title="تواصل واقتراحات"
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">
+    تواصل واقتراحات
+  </h1>
+  <p class="mt-3 text-muted">
+    اقتراح، أو ملاحظة، أو تصحيح؟ اكتبه هنا، ثم اضغط الزر ليفتح تطبيق البريد لديك
+    والرسالة جاهزة.
+  </p>
+
+  <form class="card mt-8 p-5 sm:p-6" id="contact-form">
+    <label class="block text-sm font-medium" for="contact-subject"
+      >الموضوع</label
+    >
+    <input
+      autocomplete="off"
+      class={field}
+      id="contact-subject"
+      maxlength="120"
+      name="subject"
+      placeholder="مثال: ملاحظة على كتاب"
+      required
+    >
+
+    <label class="mt-5 block text-sm font-medium" for="contact-body"
+      >الرسالة</label
+    >
+    <textarea
+      class={`${field} resize-y`}
+      id="contact-body"
+      maxlength="1500"
+      name="body"
+      placeholder="اكتب رسالتك، ومعها رابط الصفحة إن كانت الملاحظة عليها."
+      required
+      rows="8"
+    ></textarea>
+
+    <button
+      class="mt-6 inline-flex h-11 items-center rounded-xl bg-accent px-5 font-medium text-accent-fg transition-opacity hover:opacity-90"
+      type="submit"
+    >
+      افتح البريد
+    </button>
+
+    <p class="mt-4 text-sm text-muted">
+      لم يفتح تطبيق البريد؟ راسلنا مباشرة على
+      <a
+        class="text-accent underline underline-offset-4"
+        dir="ltr"
+        href={`mailto:${CONTACT_EMAIL}`}
+        >{CONTACT_EMAIL}</a
+      >
+    </p>
+  </form>
+</Base>
+
+<script>
+  import { mailto } from "../lib/seo";
+
+  const form = document.querySelector<HTMLFormElement>("#contact-form");
+  const subject = document.querySelector<HTMLInputElement>("#contact-subject");
+  const body = document.querySelector<HTMLTextAreaElement>("#contact-body");
+
+  form?.addEventListener("submit", (e) => {
+    // `required` already blocked the empty case; all that's left is handing the browser
+    // a mailto: instead of a GET — form action="mailto:" is unreliable across clients.
+    e.preventDefault();
+    if (!(subject && body)) {
+      return;
+    }
+    location.href = mailto(subject.value.trim(), body.value.trim());
+  });
+</script>

@@ -1,1 +1,243 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant no-hover (@media (hover: none));
+
+/* Paper & ink: warm parchment, deep emerald accent. Values flip on .dark. */
+:root {
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --surface-2: #f4f2ec;
+  --border: #e5e1d8;
+  --border-strong: #8a8578; /* 3.5:1 on --bg — for form controls (WCAG 1.4.11) */
+  --fg: #1b1a17;
+  --muted: #6a6558;
+  --accent: #0f6b5c;
+  --accent-fg: #ffffff;
+  --accent-soft: #e4f1ec;
+  --mark-bg: #fde68a;
+  --mark-fg: #3b2f00;
+  --ring: #0f6b5c;
+  --radius: 0.625rem;
+  /* Not part of the parchment palette: shadcn primitives need an error colour. */
+  --destructive: #b42318;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #101210;
+  --surface: #171a18;
+  --surface-2: #1e2220;
+  --border: #2a2f2c;
+  --border-strong: #6b706c; /* 3.5:1 on --bg */
+  --fg: #ecebe4;
+  --muted: #9a968b;
+  --accent: #52c2a5;
+  --accent-fg: #06231d;
+  --accent-soft: #12312a;
+  --mark-bg: #6b5410;
+  --mark-fg: #fff4cf;
+  --ring: #52c2a5;
+  --destructive: #f97066;
+  color-scheme: dark;
+}
+
+/* shadcn's token names, aliased onto the palette above — one source of truth for
+   the hex values. Declared after .dark so they resolve against whichever set of
+   palette values <html> ended up with. */
+:root {
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--surface);
+  --card-foreground: var(--fg);
+  --popover: var(--surface);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-fg);
+  --destructive-foreground: var(--accent-fg);
+  --input: var(--border);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--fg);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: var(--accent-fg);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--fg);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+
+  /* The same colours under shadcn's names, so its primitives keep working. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-thmanyah-sans);
+  --font-heading: var(--font-sans);
+  --font-mono: var(--font-sans);
+  /* Tailwind preflight falls back to these on html/<code>/form controls. Pin them
+     too, so nothing on the page can reach a system font. */
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-sans);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    scrollbar-color: var(--accent) transparent;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-feature-settings: "salt" 1;
+  }
+
+  /* Western digits inside Arabic text, always LTR-ordered. */
+  .digits {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  ::selection {
+    color: var(--fg);
+    background: var(--accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  mark {
+    padding-inline: 1px;
+    color: var(--mark-fg);
+    background: var(--mark-bg);
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility prose-read {
+  font-size: 1.0625rem;
+  line-height: 2;
+  letter-spacing: 0;
+}
+
+@utility card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+}
+
+/* انتقالُ التصفّح: يتكفّل به المتصفّحُ وحده — لا موجِّهَ ولا سكربت. */
+@view-transition {
+  navigation: auto;
+}
+/* قاعدةُ `*` أعلاه لا تطال زائفاتِ ::view-transition، فالسكونُ هنا صريح. */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* تبديلُ الوضع: القديمُ ثابتٌ تحت، والجديدُ دائرةٌ تتّسع من زرّ التبديل.
+   مقصورٌ على .theme-vt كي لا يسرقَ عبورَ التصفّح. */
+html.theme-vt::view-transition-old(root),
+html.theme-vt::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+html.theme-vt::view-transition-old(root) {
+  z-index: 0;
+}
+html.theme-vt::view-transition-new(root) {
+  z-index: 1;
+  animation: theme-wipe 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes theme-wipe {
+  from {
+    clip-path: circle(0 at var(--wipe-x, 50%) var(--wipe-y, 0));
+  }
+  to {
+    clip-path: circle(
+      var(--wipe-r, 150vmax) at var(--wipe-x, 50%) var(--wipe-y, 0)
+    );
+  }
+}

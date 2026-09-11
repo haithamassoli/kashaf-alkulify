@@ -1,0 +1,39 @@
+{
+  "name": "كشّاف أبي جعفر — بحث في نصوص دروس الشيخ عبد الله الخليفي",
+  "short_name": "كشّاف أبي جعفر",
+  "description": "ابحث في نصوص دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي المفرَّغة آليًا.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#fbfaf7",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
