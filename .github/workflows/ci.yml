@@ -19,3 +19,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+        env:
+          # ponytail: falls back to the prod deployment URL; set the secret to override
+          PUBLIC_CONVEX_URL: ${{ secrets.PUBLIC_CONVEX_URL || 'https://charming-cod-541.eu-west-1.convex.cloud' }}
+          PUBLIC_CONVEX_SITE_URL: ${{ secrets.PUBLIC_CONVEX_SITE_URL || 'https://charming-cod-541.eu-west-1.convex.site' }}
