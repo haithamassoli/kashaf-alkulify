@@ -20,3 +20,23 @@ Consult these guides before working on related tasks:
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+
+## Code style
+
+Biome (via the Ultracite preset) is the single formatter and linter. Run
+`npm run format` to fix, `npm run lint` to check, `npm run check` to also
+type-check `.astro` files. A lefthook pre-commit hook formats staged files
+automatically, so do not hand-format.
+
+Full rule rationale: `node_modules/ultracite/skills/ultracite/references/code-standards.md`.
+
+Rules that matter day to day:
+
+- No `any`, no non-null `!`, no unchecked casts. Model the type or narrow it.
+- No `console.log` or `debugger` in committed code.
+- Prefer `const`, arrow functions, `for...of`, optional chaining, template literals.
+- Early return over nested `if`. No `else` after `return`.
+- Every `<img>` needs `alt`; every interactive element needs an accessible name and keyboard handler.
+- No dead code: unused imports, variables, and parameters are errors.
+- Astro components and layouts are `PascalCase.astro`; everything else is kebab-case.
+- Style with Tailwind utilities in `class`. Reach for a `<style>` block only when a utility cannot express it.

@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/biome/core", "ultracite/biome/astro"],
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "overrides": [
+    {
+      // Astro components/layouts are PascalCase by convention.
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": { "filenameCases": ["PascalCase", "kebab-case"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      // Standalone asset files, not inline JSX.
+      "includes": ["**/*.svg"],
+      "linter": { "rules": { "a11y": { "noSvgWithoutTitle": "off" } } }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{js,jsx,ts,tsx,mjs,cjs,astro,json,jsonc,css,md}"
+      run: npx biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
