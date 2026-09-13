@@ -1,6 +1,12 @@
 ---
+import PlatformContent from "../components/PlatformContent.astro";
+import Search from "../islands/search";
 import Base from "../layouts/Base.astro";
 import { person, SHEIKH, SITE, SITE_URL } from "../lib/seo";
+
+const endpoint =
+  import.meta.env.PUBLIC_SEARCH_API_URL ??
+  (import.meta.env.DEV ? "http://127.0.0.1:8787" : "");
 
 const schema = {
   "@context": "https://schema.org",
@@ -13,24 +19,13 @@ const schema = {
 };
 ---
 
-<Base description={`كتب ومصنفات ${SHEIKH} للقراءة والتنزيل.`} schema={[schema]}>
-  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">
-    {SITE}
-  </h1>
-  <p class="mt-3 text-muted leading-8">
-    كشّاف غير رسمي يجمع كتب ومصنفات {SHEIKH} في مكان واحد، مرتّبةً ومتاحةً للقراءة
-    والتنزيل بصيغة PDF.
-  </p>
+<Base description={`ابحث في نصوص دروس ${SHEIKH} ومقالاته.`} schema={[schema]}>
+  <section class="pt-10 sm:pt-16">
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{SITE}</h1>
+    <p class="mt-3 text-muted">ابحث في دروس {SHEIKH}</p>
+  </section>
 
-  <a
-    class="mt-6 inline-flex min-h-11 items-center rounded-lg bg-accent px-5 font-medium text-accent-fg transition-opacity hover:opacity-90"
-    href="/b/"
-  >
-    تصفَّح الكتب
-  </a>
-  <a
-    class="ms-4 mt-6 inline-flex min-h-11 items-center text-accent underline"
-    href="/search/"
-    >البحث في الدروس والمقالات</a
-  >
+  <Search endpoint={endpoint.replace(/\/$/, "")} client:load />
+
+  <PlatformContent />
 </Base>

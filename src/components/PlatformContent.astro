@@ -1,0 +1,188 @@
+---
+import { arabicDate } from "../lib/format";
+
+const num = (value: number) => value.toLocaleString("en-US");
+
+const cards = [
+  {
+    icon: ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18", "m10.3 8.5 5.2 3.5-5.2 3.5Z"],
+    label: "الدروس",
+    value: num(4360),
+  },
+  {
+    icon: ["M4 7h12M4 12h12M4 17h7", "m17 13 4 2.5-4 2.5Z"],
+    label: "السلاسل",
+    value: num(292),
+  },
+  {
+    icon: ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18", "M12 7.5V12l3 2"],
+    label: "الساعات المفرَّغة",
+    value: num(2300),
+  },
+  {
+    date: true,
+    icon: [
+      "M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z",
+      "M8 9h8M8 13h5",
+    ],
+    label: "مقاطع التفريغ",
+    value: num(379_112),
+  },
+  {
+    icon: [
+      "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z",
+      "M14 3v5h5",
+      "M9 13h6M9 17h4",
+    ],
+    label: "المقالات",
+    value: num(4455),
+  },
+  {
+    icon: [
+      "M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z",
+      "M8 3v4M16 3v4M4 11h16",
+    ],
+    label: "آخر إضافة",
+    value: arabicDate("2026-09-10"),
+  },
+];
+
+const series = [
+  { hours: 126, name: "الدارمي" },
+  { hours: 111.5, name: "المغني" },
+  { hours: 59.5, name: "مراجعات ومناصحات" },
+  { hours: 51.9, name: "تاريخ الإسلام" },
+  { hours: 48.1, name: "سيرة ابن هشام" },
+  { hours: 47.1, name: "السنة لأبي بكر الخلال" },
+  { hours: 44.1, name: "السنة" },
+  { hours: 43.5, name: "الجامع" },
+];
+
+const cumulative = [
+  { hours: 427, label: "2017" },
+  { hours: 586, label: "2018" },
+  { hours: 723, label: "2019" },
+  { hours: 871, label: "2020" },
+  { hours: 1039, label: "2021" },
+  { hours: 1199, label: "2022" },
+  { hours: 1338, label: "2023" },
+  { hours: 1526, label: "2024" },
+  { hours: 1917, label: "2025" },
+  { hours: 2300, label: "2026" },
+];
+
+const maxSeriesHours = Math.max(...series.map(({ hours }) => hours));
+const left = 24;
+const right = 460;
+const top = 24;
+const bottom = 274;
+const maxHours = 2500;
+const points = cumulative.map(({ hours }, index) => ({
+  x: left + (index * (right - left)) / (cumulative.length - 1),
+  y: bottom - (hours / maxHours) * (bottom - top),
+}));
+const line = points
+  .map(({ x, y }, index) => `${index ? "L" : "M"}${x},${y}`)
+  .join(" ");
+const area = `${line} L${right},${bottom} L${left},${bottom} Z`;
+
+if (cumulative.at(-1)?.hours !== 2300 || series.length !== 8) {
+  throw new Error("Platform statistics are incomplete");
+}
+---
+
+<section class="mt-14 border-border border-t pt-10" id="platform-content">
+  <h2 class="font-semibold text-lg tracking-tight">محتوى المنصة</h2>
+  <p class="mt-2 text-muted text-sm">ما هو متاح في الكشّاف حتى الآن</p>
+
+  <ul class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
+    {cards.map((card) => (
+        <li class="card flex items-center justify-between gap-3 px-4 py-4">
+          <div class="min-w-0">
+            <span class="block text-muted text-sm">{card.label}</span>
+            <span
+              class:list={[
+                "mt-1 block font-semibold text-xl",
+                !card.date && "digits",
+              ]}>{card.value}</span
+            >
+          </div>
+          <svg
+            aria-hidden="true"
+            class="size-5 shrink-0 text-muted"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+            viewBox="0 0 24 24"
+          >
+            {card.icon.map((path) => <path d={path} />)}
+          </svg>
+        </li>
+      ))}
+  </ul>
+
+  <div class="mt-3 grid gap-3 md:grid-cols-2">
+    <section class="card p-4">
+      <h3 class="font-semibold text-base">أكبر السلاسل تفريغًا</h3>
+      <p class="mt-1 text-muted text-sm">أطول 8 سلاسل من أصل 292</p>
+      <ol
+        aria-label="أكبر السلاسل حسب الساعات المفرغة"
+        class="mt-4 space-y-2.5"
+      >
+        {series.map((item) => (
+            <li class="grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-3">
+              <div class="h-4 overflow-hidden rounded-sm bg-surface-2">
+                <div
+                  class="ms-auto h-full rounded-sm bg-accent"
+                  style={`width: ${(item.hours / maxSeriesHours) * 100}%`}
+                />
+              </div>
+              <span class="truncate text-muted text-sm" title={item.name}>{item.name}</span>
+              <span class="sr-only">{item.hours} ساعة</span>
+            </li>
+          ))}
+      </ol>
+    </section>
+
+    <section class="card p-4">
+      <h3 class="font-semibold text-base">الساعات المفرَّغة تراكميًا</h3>
+      <p class="mt-1 text-muted text-sm">مجموع ساعات المحتوى سنةً بعد سنة</p>
+      <svg
+        aria-labelledby="cumulative-title cumulative-description"
+        class="mt-4 h-56 w-full"
+        role="img"
+        viewBox="0 0 520 320"
+      >
+        <title id="cumulative-title">الساعات المفرغة تراكميًا</title>
+        <desc id="cumulative-description">
+          ارتفعت الساعات من 427 ساعة في 2017 إلى 2300 ساعة في 2026.
+        </desc>
+        {[0, 1000, 2000, 2500].map((value) => {
+          const y = bottom - (value / maxHours) * (bottom - top);
+          return (
+            <g>
+              <line class="stroke-border" x1={left} x2={right} y1={y} y2={y} />
+              <text class="fill-muted text-[11px]" text-anchor="start" x="474" y={y + 4}>{num(value)}</text>
+            </g>
+          );
+        })}
+        <path class="fill-accent/10" d={area}></path>
+        <path
+          class="fill-none stroke-accent"
+          d={line}
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2.5"
+        ></path>
+        {cumulative.map((point, index) => {
+          const coordinates = points[index];
+          return index % 2 === 0 || index === cumulative.length - 1 ? (
+            <text class="fill-muted text-[10px]" text-anchor="middle" x={coordinates.x} y="306">{point.label}</text>
+          ) : null;
+        })}
+      </svg>
+    </section>
+  </div>
+</section>

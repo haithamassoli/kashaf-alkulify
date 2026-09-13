@@ -1,5 +1,6 @@
 ---
 import { Font } from "astro:assets";
+import WelcomeIntro from "../components/WelcomeIntro.astro";
 import { HOME_TITLE, SHEIKH, SITE } from "../lib/seo";
 import "../styles/global.css";
 
@@ -18,7 +19,7 @@ interface Props {
 
 const {
   title,
-  description = `كتب ومصنفات ${SHEIKH}`,
+  description = `ابحث في دروس ${SHEIKH}`,
   noindex = false,
   wide = false,
   // Purpose-built card at 1200×630.
@@ -122,6 +123,7 @@ const jsonLd = (data: Record<string, unknown>) =>
   </head>
 
   <body class="bg-bg text-fg antialiased">
+    <WelcomeIntro />
     <a
       class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-fg"
       href="#main"
@@ -154,11 +156,16 @@ const jsonLd = (data: Record<string, unknown>) =>
         <nav aria-label="روابط رئيسية" class="flex items-center gap-1 text-sm">
           <a
             class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            href="/search/"
+            >البحث</a
+          >
+          <a
+            class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
             href="/b/"
             >الكتب</a
           >
           <a
-            class="inline-flex h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            class="hidden h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-surface-2 hover:text-fg sm:inline-flex"
             href="/contact/"
             >تواصل</a
           >
@@ -247,6 +254,15 @@ const jsonLd = (data: Record<string, unknown>) =>
             >تواصل معنا</a
           >.
         </p>
+        <p class="mt-1">
+          النصوص مفرَّغة آليًا وقد تحتوي أخطاء؛ الأصل هو
+          <a
+            class="text-accent underline underline-offset-4"
+            href="https://www.youtube.com/@Alkulify1"
+            rel="noopener"
+            >التسجيل الصوتي</a
+          >.
+        </p>
       </div>
     </footer>
 
@@ -312,6 +328,32 @@ const jsonLd = (data: Record<string, unknown>) =>
             .finished.finally(() => root.classList.remove("theme-vt"));
         });
       }
+
+      addEventListener("keydown", (event) => {
+        if (
+          event.key !== "/" ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        const active = document.activeElement;
+        if (
+          active instanceof HTMLInputElement ||
+          active instanceof HTMLTextAreaElement ||
+          active instanceof HTMLSelectElement ||
+          (active instanceof HTMLElement && active.isContentEditable)
+        ) {
+          return;
+        }
+        const search = document.querySelector("[data-search-input]");
+        if (search instanceof HTMLInputElement) {
+          event.preventDefault();
+          search.focus();
+          search.select();
+        }
+      });
     </script>
   </body>
 </html>

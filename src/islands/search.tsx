@@ -196,9 +196,9 @@ export default function Search({ endpoint }: { endpoint: string }) {
     }
   };
 
-  const changeScope = (event: ChangeEvent<HTMLInputElement>) => {
+  const changeScope = (event: MouseEvent<HTMLButtonElement>) => {
     reset();
-    setScope(event.target.value);
+    setScope(event.currentTarget.value);
   };
   const changeQuery = (event: ChangeEvent<HTMLInputElement>) =>
     setQuery(event.target.value);
@@ -221,98 +221,149 @@ export default function Search({ endpoint }: { endpoint: string }) {
   const seek = (event: SyntheticEvent<HTMLAudioElement>) => {
     event.currentTarget.currentTime = playback?.seconds ?? 0;
   };
-  const showMore = () => setVisible(visible + 10);
+  const showMore = () => setVisible((current) => current + 10);
 
   return (
     <section aria-label="البحث في الدروس والمقالات" className="mt-8">
       <search>
-        <form className="space-y-4" onSubmit={submit}>
-          <fieldset className="flex gap-6">
-            <legend className="mb-2 font-medium">أين تريد البحث؟</legend>
-            {[
-              { label: "الدروس الصوتية", value: "audio" },
-              { label: "المقالات", value: "articles" },
-            ].map((option) => (
-              <label
-                className="flex min-h-11 items-center gap-2"
-                key={option.value}
-              >
-                <input
-                  checked={scope === option.value}
-                  name="scope"
-                  onChange={changeScope}
-                  type="radio"
-                  value={option.value}
-                />
-                {option.label}
-              </label>
-            ))}
-          </fieldset>
-          <label className="block" htmlFor="search-query">
-            عبارة سمعتها، أو موضوع تريد العثور عليه
+        <form onSubmit={submit}>
+          <label className="sr-only" htmlFor="search-query">
+            ابحث في نصوص الدروس والمقالات
           </label>
           <div className="flex gap-2">
             <input
-              className="min-h-11 min-w-0 flex-1 rounded-lg border border-current/20 bg-transparent px-3"
+              autoComplete="off"
+              className="h-12 min-w-0 flex-1 rounded-xl border border-border-strong bg-surface px-4 text-base placeholder:text-muted"
+              data-search-input
+              enterKeyHint="search"
               id="search-query"
               maxLength={500}
               onChange={changeQuery}
+              placeholder="مثال: كفارة اليمين"
               required
+              spellCheck={false}
               type="search"
               value={query}
             />
             <button
-              className="min-h-11 rounded-lg bg-accent px-5 text-accent-fg disabled:opacity-50"
+              className="h-12 shrink-0 rounded-xl bg-accent px-6 font-medium text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-50"
               disabled={busy || !query.trim()}
               type="submit"
             >
               {busy ? "جارٍ البحث…" : "بحث"}
             </button>
           </div>
-          <label className="flex min-h-11 items-center gap-2">
-            <input
-              checked={mode === "phrase"}
-              onChange={changeMode}
-              type="checkbox"
-            />
-            مطابقة العبارة بالترتيب نفسه
-          </label>
-          {mode === "phrase" && (
-            <p className="text-muted text-sm">
-              نتجاهل التشكيل والتطويل وعلامات الترقيم، ونحافظ على الهمزة والتاء
-              المربوطة والألف المقصورة.
-            </p>
-          )}
-          <label className="flex min-h-11 items-center gap-2">
-            <input
-              checked={occurrences}
-              onChange={changeOccurrences}
-              type="checkbox"
-            />
-            إظهار المواضع المتعددة من المصدر نفسه
-          </label>
+
+          <nav
+            aria-label="نوع النتائج"
+            className="mt-6 flex gap-2 border-border border-b"
+          >
+            {[
+              { label: "الدروس الصوتية", value: "audio" },
+              { label: "المقالات", value: "articles" },
+            ].map((option) => (
+              <button
+                aria-pressed={scope === option.value}
+                className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-3 text-sm transition-colors ${
+                  scope === option.value
+                    ? "border-accent font-medium text-fg"
+                    : "border-transparent text-muted hover:text-fg"
+                }`}
+                key={option.value}
+                onClick={changeScope}
+                type="button"
+                value={option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </nav>
+
+          <details className="mt-3 text-sm">
+            <summary className="flex min-h-11 cursor-pointer items-center text-muted hover:text-fg">
+              خيارات البحث
+            </summary>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 rounded-lg bg-surface-2 px-4 py-2">
+              <label className="flex min-h-11 items-center gap-2">
+                <input
+                  checked={mode === "phrase"}
+                  onChange={changeMode}
+                  type="checkbox"
+                />
+                مطابقة العبارة بالترتيب نفسه
+              </label>
+              <label className="flex min-h-11 items-center gap-2">
+                <input
+                  checked={occurrences}
+                  onChange={changeOccurrences}
+                  type="checkbox"
+                />
+                إظهار المواضع المتعددة من المصدر نفسه
+              </label>
+              {mode === "phrase" && (
+                <p className="w-full pb-2 text-muted">
+                  نتجاهل التشكيل والتطويل وعلامات الترقيم، ونحافظ على الهمزة
+                  والتاء المربوطة والألف المقصورة.
+                </p>
+              )}
+            </div>
+          </details>
         </form>
       </search>
-      <p aria-live="polite" className="my-5 text-muted leading-8" role="status">
-        {message}
-      </p>
-      <ol aria-busy={busy} className="space-y-5">
+
+      <div
+        aria-live="polite"
+        className="mt-8 scroll-mt-20 outline-none"
+        role="status"
+      >
+        {busy && <p className="text-muted text-sm">جارٍ البحث…</p>}
+        {!busy && hits.length > 0 && (
+          <p className="text-muted text-sm">
+            عُثر على <span className="digits">{hits.length}</span> نتيجة
+          </p>
+        )}
+        {!busy && message && <p className="text-muted leading-8">{message}</p>}
+      </div>
+
+      {busy && (
+        <ul aria-hidden="true" className="mt-4 space-y-3">
+          {[0, 1, 2].map((item) => (
+            <li className="card animate-pulse p-4" key={item}>
+              <div className="h-4 w-2/5 rounded bg-surface-2" />
+              <div className="mt-5 h-3 w-full rounded bg-surface-2" />
+              <div className="mt-3 h-3 w-4/5 rounded bg-surface-2" />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <ol aria-busy={busy} className="mt-4 space-y-3">
         {hits.slice(0, visible).map((hit) => (
-          <li className="rounded-lg border border-current/15 p-4" key={hit.id}>
-            <h2 className="font-semibold">{hit.title}</h2>
-            <blockquote className="mt-3 whitespace-pre-wrap leading-8">
+          <li
+            className="card p-4 transition-colors hover:bg-surface-2"
+            key={hit.id}
+          >
+            <p className="text-muted text-xs">
+              <span className="rounded-full bg-surface-2 px-2 py-0.5">
+                {scope === "articles" ? "مقالة" : "درس صوتي"}
+              </span>
+            </p>
+            <h2 className="mt-2 font-medium text-base text-fg">{hit.title}</h2>
+            <blockquote className="prose-read mt-2 line-clamp-3 whitespace-pre-wrap text-muted">
               {hit.text}
             </blockquote>
             <details className="mt-3">
-              <summary className="min-h-11 cursor-pointer py-2 text-accent">
+              <summary className="inline-flex min-h-11 cursor-pointer items-center text-accent">
                 قراءة السياق
               </summary>
-              <p className="whitespace-pre-wrap leading-8">{hit.context}</p>
+              <p className="prose-read whitespace-pre-wrap rounded-lg bg-surface-2 p-3">
+                {hit.context}
+              </p>
             </details>
-            <div className="mt-3 flex flex-wrap items-center gap-4">
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 text-sm">
               {hit.startMs !== undefined && (
                 <button
-                  className="min-h-11 text-accent underline"
+                  className="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
                   data-hit={hit.id}
                   onClick={playHit}
                   type="button"
@@ -322,7 +373,7 @@ export default function Search({ endpoint }: { endpoint: string }) {
               )}
               {hit.url.startsWith("https://") && (
                 <a
-                  className="inline-flex min-h-11 items-center text-accent underline"
+                  className="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
                   href={hit.url}
                   rel="noopener noreferrer"
                   target="_blank"
@@ -354,7 +405,7 @@ export default function Search({ endpoint }: { endpoint: string }) {
       </ol>
       {visible < hits.length && (
         <button
-          className="mt-5 min-h-11 rounded-lg border px-5"
+          className="mt-6 min-h-11 rounded-lg border border-border-strong px-5 text-sm transition-colors hover:bg-surface-2"
           onClick={showMore}
           type="button"
         >
