@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "dev-01",
+      "family": "js73rfc5axve256pckm9776gah8e4jzk",
+      "split": "development",
+      "scope": "audio",
+      "intent": "topic",
+      "query": "لماذا لا يصح أن ننسب للإنسان كل ما يلزم من مذهبه؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "js73rfc5axve256pckm9776gah8e4jzk",
+          "sourceHash": "07af883565309d5c42d7790d679b4373439727434b403871cd4b33d2610a2296",
+          "charStart": 2250,
+          "charEnd": 2319,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-02",
+      "family": "js778ndv4n6jwk4zmcdknfhcyd8e5yh7",
+      "split": "development",
+      "scope": "audio",
+      "intent": "ruling",
+      "query": "هل يحتاج الورع إلى معرفة الأحكام والخلاف بين العلماء؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "js778ndv4n6jwk4zmcdknfhcyd8e5yh7",
+          "sourceHash": "fcd0e5f109095b942736f5be91425a0f74bd31fa9cf6b8061fec3db0b66e84b6",
+          "charStart": 1706,
+          "charEnd": 1805,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-03",
+      "family": "js748a1anptg5rnrkyv6azxd3d8e5awq",
+      "split": "development",
+      "scope": "audio",
+      "intent": "topic",
+      "query": "هل تكلم الشيخ عن تمويل تعليم الناس التوحيد بدلا من زيادة بناء المساجد؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "js748a1anptg5rnrkyv6azxd3d8e5awq",
+          "sourceHash": "574a8f2a5d6a43d585b7702df662e1085c488853b89181b7e564e815122877de",
+          "charStart": 2219,
+          "charEnd": 2332,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-04",
+      "family": "js70bf22956fm5eq4hec98nh4s8e4m9c",
+      "split": "development",
+      "scope": "audio",
+      "intent": "topic",
+      "query": "موقف السلف من السؤال عن مسائل افتراضية لم تحدث",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "js70bf22956fm5eq4hec98nh4s8e4m9c",
+          "sourceHash": "0e0a55df16267d9402853607429b9d772895ce992c27dc22ecf2ab5a4f33d17e",
+          "charStart": 1391,
+          "charEnd": 1458,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-05",
+      "family": "js74fhhgv0atk5vdnn6rzrhp218e57h7",
+      "split": "development",
+      "scope": "audio",
+      "intent": "topic",
+      "query": "نصيحة لمن لا يستطيع حفظ العلم ويريد الاحتفاظ به",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "js74fhhgv0atk5vdnn6rzrhp218e57h7",
+          "sourceHash": "7a4f3d4b9a45b52c45c5e07a8d6949c96cf02403a11cd603a43bdf8829fe476a",
+          "charStart": 1831,
+          "charEnd": 1902,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-06",
+      "family": "js74fn4psn54k9kq3kejzwbpjx8e4tjj",
+      "split": "development",
+      "scope": "audio",
+      "intent": "topic",
+      "query": "هل يمكن أن يكون شخص فقيها ولكنه ضعيف في الحديث؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "js74fn4psn54k9kq3kejzwbpjx8e4tjj",
+          "sourceHash": "3ac2387b57ccb71efd6e1cb2c638891789631319202334611e46d0287ed370d6",
+          "charStart": 1721,
+          "charEnd": 1771,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-07",
+      "family": "j577d24f1hgbstg8awm8a545zd8e4m7z",
+      "split": "development",
+      "scope": "articles",
+      "intent": "topic",
+      "query": "أثر الربا وتراكم الديون على حياة المدين",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "j577d24f1hgbstg8awm8a545zd8e4m7z",
+          "sourceHash": "dd043290617f023a19c6f73d0f29377d63c8544e73e62a5098a89aa9393f12df",
+          "charStart": 210,
+          "charEnd": 296,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-08",
+      "family": "j5798qskdyha67txe7hkp5r7ss8e5rjc",
+      "split": "development",
+      "scope": "articles",
+      "intent": "topic",
+      "query": "كيف يتسبب الاطمئنان لفوز المرشح في خسارته الانتخابات؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "j5798qskdyha67txe7hkp5r7ss8e5rjc",
+          "sourceHash": "e87246f211e30fc0f7b68cc0cadb2fc19b91ab8eb8ef629491a05900419f4905",
+          "charStart": 342,
+          "charEnd": 494,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-09",
+      "family": "j571252a09x9y3w1qrndmkwhx18e5dd9",
+      "split": "development",
+      "scope": "articles",
+      "intent": "topic",
+      "query": "كيف يؤثر الإفراط في الاستهلاك على التكافل واستقرار الأسرة؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "j571252a09x9y3w1qrndmkwhx18e5dd9",
+          "sourceHash": "665c6f73aa91920d5acdaf0d9717ed7fbfc31b587afdabb75480a16ca114937c",
+          "charStart": 683,
+          "charEnd": 733,
+          "grade": 3
+        }
+      ]
+    },
+    {
+      "id": "dev-10",
+      "family": "j57c3j749xv23gpw405x8n6m9h8e4xc5",
+      "split": "development",
+      "scope": "articles",
+      "intent": "topic",
+      "query": "هل توجد أمثلة لعمل المرأة بالتجارة من داخل منزلها في زمن السلف؟",
+      "reviewed": false,
+      "provenance": "agent_drafted_from_transcript_or_article_not_human_or_audio_reviewed",
+      "gold": [
+        {
+          "sourceId": "j57c3j749xv23gpw405x8n6m9h8e4xc5",
+          "sourceHash": "1080be2adb55d00707d13ae618aee11db36f9f8354b7139b5409955fb9578767",
+          "charStart": 312,
+          "charEnd": 455,
+          "grade": 3
+        }
+      ]
+    }
+  ]
+}
