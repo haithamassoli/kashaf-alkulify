@@ -22,6 +22,12 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  PLAYER_SLOTS,
+  PLAYER_SPEEDS,
+  PLAYER_TRANSLATIONS,
+  usePlayerTheme,
+} from "../../lib/player";
 import { Banner, duration, errorMessage, ICON_BUTTON, num } from "./ui";
 
 interface Part {
@@ -32,90 +38,6 @@ interface Part {
   partId: Id<"lessonParts">;
   url: string;
 }
-
-/**
- * Arabic labels for every word the audio layout can surface. Vidstack ships no
- * Arabic bundle, so an unlisted key falls back to English mid-menu.
- */
-const TRANSLATIONS = {
-  Accessibility: "إمكانية الوصول",
-  Announcements: "الإعلانات الصوتية",
-  Audio: "الصوت",
-  Auto: "تلقائي",
-  Boost: "تعزيز",
-  "Caption Styles": "أنماط الترجمة",
-  Captions: "الترجمة",
-  Chapters: "الفصول",
-  "Closed-Captions Off": "الترجمة معطّلة",
-  "Closed-Captions On": "الترجمة مفعّلة",
-  Color: "اللون",
-  Continue: "متابعة",
-  Default: "الافتراضي",
-  Disabled: "معطّل",
-  "Display Background": "خلفية العرض",
-  Download: "تنزيل",
-  Family: "الخط",
-  Font: "الخط",
-  "Keyboard Animations": "حركات الاختصارات",
-  Loop: "تكرار",
-  Mute: "كتم الصوت",
-  Normal: "عادية",
-  Off: "معطّل",
-  Opacity: "الشفافية",
-  Pause: "إيقاف مؤقّت",
-  Play: "تشغيل",
-  Playback: "التشغيل",
-  Quality: "الجودة",
-  Replay: "إعادة",
-  Reset: "إعادة الضبط",
-  Seek: "تقديم أو تأخير",
-  "Seek Backward": "إرجاع",
-  "Seek Forward": "تقديم",
-  Settings: "الإعدادات",
-  Shadow: "الظل",
-  Size: "الحجم",
-  Speed: "السرعة",
-  Text: "النص",
-  "Text Background": "خلفية النص",
-  Track: "المسار",
-  Unmute: "إلغاء الكتم",
-  Volume: "مستوى الصوت",
-};
-
-const SPEEDS = { max: 3, min: 0.5, step: 0.25 };
-
-/**
- * `captionButton`: no lesson has a caption track, so the toggle is inert.
- * `title`: the lesson's title is the heading directly above the player, and at
- * this column width the duplicate consumed the space the seek bar needs.
- */
-const SLOTS = { captionButton: null, title: null };
-
-/**
- * The layout's own default is `"system"`, which reads `prefers-color-scheme` —
- * but this site's theme is a `.dark` class the user toggles, so the player would
- * drift out of step with the page around it.
- */
-const usePlayerTheme = (): "dark" | "light" => {
-  const [dark, setDark] = useState(
-    () =>
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("dark")
-  );
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const observer = new MutationObserver(() =>
-      setDark(root.classList.contains("dark"))
-    );
-
-    observer.observe(root, { attributeFilter: ["class"], attributes: true });
-
-    return () => observer.disconnect();
-  }, []);
-
-  return dark ? "dark" : "light";
-};
 
 export const LessonPlayer = ({
   lessonId,
@@ -242,10 +164,10 @@ export const LessonPlayer = ({
           <DefaultAudioLayout
             colorScheme={colorScheme}
             icons={defaultLayoutIcons}
-            playbackRates={SPEEDS}
+            playbackRates={PLAYER_SPEEDS}
             seekStep={10}
-            slots={SLOTS}
-            translations={TRANSLATIONS}
+            slots={PLAYER_SLOTS}
+            translations={PLAYER_TRANSLATIONS}
           />
         </MediaPlayer>
       </div>

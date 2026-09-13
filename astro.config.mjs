@@ -69,6 +69,15 @@ export default defineConfig({
   // host never has to 301 an internal hop.
   trailingSlash: "always",
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      {
+        // A production build must not overwrite React's jsx-dev-runtime cache.
+        config: (_config, { command, mode }) => ({
+          cacheDir: `node_modules/.vite-${command}-${mode}`,
+        }),
+        name: "separate-vite-caches",
+      },
+      tailwindcss(),
+    ],
   },
 });

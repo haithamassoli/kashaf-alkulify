@@ -189,6 +189,30 @@ class Search:
         return {"url": url, "offsetMs": part["offsetMs"], "durationMs": part["durationMs"],
                 "captions": "data:text/vtt;charset=utf-8," + urllib.parse.quote(captions)}
 
+    def lesson(self, source_id):
+        from cli import s3_client
+        with database(self.directory / "corpus.sqlite") as db:
+            row = db.execute("SELECT payload,segments FROM sources WHERE id=? AND scope='audio'",
+                             (source_id,)).fetchone()
+        if row is None:
+            raise ValueError("Source not found")
+        source = json.loads(row["payload"])
+        if live_revisions([source_id]).get(source_id) != source["sourceRevision"]:
+            raise ValueError("Source changed or is no longer available")
+        client = s3_client()
+        parts = [{"order": part["order"], "offsetMs": part["offsetMs"],
+                  "durationMs": part["durationMs"],
+                  "url": client.generate_presigned_url(
+                      "get_object",
+                      Params={"Bucket": os.environ["R2_ARCHIVE_BUCKET"], "Key": part["r2Key"]},
+                      ExpiresIn=21600)}
+                 for part in source["parts"]]
+        segments = [{key: segment[key] for key in ("partOrder", "startMs", "endMs", "text")}
+                    for segment in json.loads(row["segments"])]
+        original = source["url"] if urllib.parse.urlsplit(source["url"]).scheme == "https" else ""
+        return {"sourceId": source_id, "title": source["title"], "url": original,
+                "durationMs": source["durationMs"], "parts": parts, "segments": segments}
+
 
 def serve(args):
     search = Search(args.generation, args.rerank, args.threads)
@@ -259,6 +283,10 @@ def serve(args):
                     if not isinstance(body.get("sourceId"), str) or type(body.get("partOrder")) is not int:
                         raise ValueError("Invalid playback fields")
                     self.reply(200, search.playback(body["sourceId"], body["partOrder"]))
+                elif self.path == "/lesson":
+                    if set(body) != {"sourceId"} or not isinstance(body["sourceId"], str):
+                        raise ValueError("Invalid lesson fields")
+                    self.reply(200, search.lesson(body["sourceId"]))
                 else:
                     self.reply(404, {"error": "Not found"})
             except (ValueError, TypeError):

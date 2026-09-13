@@ -1,0 +1,19 @@
+---
+import "@vidstack/react/player/styles/default/theme.css";
+import "@vidstack/react/player/styles/default/layouts/audio.css";
+import Lesson from "../../islands/lesson";
+import Base from "../../layouts/Base.astro";
+
+const endpoint =
+  import.meta.env.PUBLIC_SEARCH_API_URL ??
+  (import.meta.env.DEV ? "http://127.0.0.1:8787" : "");
+---
+
+<Base
+  description="استمع إلى الدرس واقرأ تفريغه المتزامن."
+  noindex
+  title="نتيجة البحث"
+  wide
+>
+  <Lesson endpoint={endpoint.replace(/\/$/, "")} client:load />
+</Base>
