@@ -47,6 +47,17 @@ class SearchContracts(unittest.TestCase):
         self.assertEqual(score["candidateRecall"], 1)
         self.assertEqual(metrics([{**good, "sourceHash": "v2"}], [], gold)["success3"], 0)
 
+    def test_series_filter_limits_both_modes(self):
+        from service import meili_filter
+        import sqlite3
+        self.assertEqual(meili_filter({"b", "a"}), 'sourceId IN ["a", "b"]')
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE VIRTUAL TABLE phrases USING fts5(sourceId UNINDEXED, scope UNINDEXED, text)")
+        db.executemany("INSERT INTO phrases VALUES (?,?,?)", [("a", "audio", "الصلاة"), ("b", "audio", "الصلاة")])
+        rows = db.execute("SELECT sourceId FROM phrases WHERE phrases MATCH ? AND scope=? AND sourceId IN (?) LIMIT 9",
+                          ('"الصلاة"', "audio", "b")).fetchall()
+        self.assertEqual(rows, [("b",)])
+
     def test_group_after_ranking(self):
         hits = [{"sourceId": "a", "id": 3}, {"sourceId": "b", "id": 2}, {"sourceId": "a", "id": 1}]
         self.assertEqual([h["id"] for h in group_hits(hits)], [3, 2])

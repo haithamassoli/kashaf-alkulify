@@ -24,6 +24,22 @@ def live_revisions(ids):
     return current
 
 
+def series_sources(names):
+    ids = set()
+    for name in names:
+        response = request(os.environ["CONVEX_URL"].rstrip("/") + "/api/query",
+                           {"path": "content:seriesLessons", "args": {"name": name}, "format": "json"})
+        if response.get("status") != "success":
+            raise RuntimeError("Series lookup unavailable")
+        ids.update(lesson["id"] for lesson in response["value"])
+    return ids
+
+
+def meili_filter(ids):
+    # Convex ids are [a-z0-9]; json quoting keeps the filter well-formed regardless.
+    return "sourceId IN [" + ", ".join(json.dumps(i) for i in sorted(ids)) + "]"
+
+
 class Search:
     def __init__(self, generation=None, rerank=False, threads=2):
         self.generation = generation or read_json(STATE / "active.json")["generation"]
@@ -61,14 +77,15 @@ class Search:
         scores = self.reranker.predict([(query, hit["text"]) for hit in hits], batch_size=2)
         return [hit for _, hit in sorted(zip(scores.tolist(), hits), key=lambda pair: pair[0], reverse=True)]
 
-    def phrases(self, db, query, scope, count):
+    def phrases(self, db, query, scope, count, only=None):
         normalized = normalize(query)
         if not normalized:
             return []
         # FTS narrows whole sources; application verifies consecutive tokens and maps raw offsets.
         expression = '"' + normalized.replace('"', '""') + '"'
-        rows = db.execute("SELECT sourceId FROM phrases WHERE phrases MATCH ? AND scope=? ORDER BY rank LIMIT ?",
-                          (expression, scope, count))
+        within = "" if only is None else f" AND sourceId IN ({','.join('?' * len(only))})"
+        rows = db.execute(f"SELECT sourceId FROM phrases WHERE phrases MATCH ? AND scope=?{within} ORDER BY rank LIMIT ?",
+                          (expression, scope, *(only or ()), count)).fetchall()
         hits = []
         for row in rows:
             source = db.execute("SELECT * FROM sources WHERE id=?", (row["sourceId"],)).fetchone()
@@ -88,7 +105,7 @@ class Search:
         return hits
 
     def run(self, query, scope="audio", mode="hybrid", candidates=100, all_occurrences=False,
-            ratio=0.7, threshold=None, validate_live=True):
+            ratio=0.7, threshold=None, validate_live=True, series=()):
         if not isinstance(query, str) or not 1 <= len(query.strip()) <= 500:
             raise ValueError("Query must contain 1–500 characters")
         if not normalize(query) or not 0 <= ratio <= 1:
@@ -97,16 +114,25 @@ class Search:
             raise ValueError("Unknown search scope or mode")
         if type(candidates) is not int or not 1 <= candidates <= 200:
             raise ValueError("Candidate limit must be 1–200")
+        if (not isinstance(series, (list, tuple)) or len(series) > 20
+                or not all(isinstance(n, str) and 0 < len(n) <= 200 for n in series)
+                or (series and scope != "audio")):
+            raise ValueError("Series must be up to 20 names, audio scope only")
+        only = sorted(series_sources(series)) if series else None
         started = time.monotonic()
         db = database(self.directory / "corpus.sqlite")
         degraded = []
         widened = False
         try:
-            if mode == "phrase":
-                hits = self.phrases(db, query, scope, candidates)
+            if only == []:
+                hits = []
+            elif mode == "phrase":
+                hits = self.phrases(db, query, scope, candidates, only)
             else:
                 body = {"q": normalize(query, True), "limit": candidates,
                         "matchingStrategy": "all", "showRankingScore": True}
+                if only:
+                    body["filter"] = meili_filter(only)
                 if threshold is not None:
                     if not isinstance(threshold, (int, float)) or not 0 <= threshold <= 1:
                         raise ValueError("Threshold must be 0–1")
@@ -271,12 +297,13 @@ def serve(args):
                 if not isinstance(body, dict):
                     raise ValueError("Expected JSON object")
                 if self.path == "/search":
-                    allowed = {"query", "scope", "mode", "allOccurrences"}
+                    allowed = {"query", "scope", "mode", "allOccurrences", "series"}
                     if set(body) - allowed or type(body.get("allOccurrences", False)) is not bool:
                         raise ValueError("Invalid search fields")
                     result = search.run(body.get("query"), body.get("scope", "audio"), body.get("mode", "hybrid"),
                                         candidates=args.candidates, ratio=args.ratio, threshold=args.threshold,
-                                        all_occurrences=body.get("allOccurrences", False))
+                                        all_occurrences=body.get("allOccurrences", False),
+                                        series=body.get("series", []))
                     result.pop("candidates")
                     self.reply(200, result)
                 elif self.path == "/playback":
