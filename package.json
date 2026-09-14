@@ -9,7 +9,7 @@
     "dev": "astro dev",
     "format": "biome check --write",
     "lint": "biome check",
-    "prepare": "lefthook install",
+    "prepare": "if git rev-parse --git-dir >/dev/null 2>&1; then lefthook install; fi",
     "preview": "astro preview",
     "search:check": ".search-venv/bin/python -m unittest discover -s scripts/search -p 'test_*.py'",
     "search:embed": ".search-venv/bin/python scripts/search/cli.py embed",
