@@ -76,6 +76,21 @@ class SearchContracts(unittest.TestCase):
         with self.assertRaises(ValueError):
             source_text(source, {**artifact, "assemblyHash": "stale"})
 
+    def test_transcript_stops_at_the_audio_boundary(self):
+        part = {"sha256": "sha", "order": 0, "offsetMs": 0, "durationMs": 60000}
+        source = {"scope": "audio", "sourceId": "a", "assemblyHash": "hash",
+                  "durationMs": 60000, "parts": [part]}
+        artifact = {"lessonId": "a", "assemblyHash": "hash", "parts": [part],
+                    "segments": [
+                        {"text": "داخل الصوت", "partOrder": 0, "sha256": "sha",
+                         "startMs": 59000, "endMs": 65000},
+                        {"text": "بعد الصوت", "partOrder": 0, "sha256": "sha",
+                         "startMs": 61000, "endMs": 65000},
+                    ]}
+        text, segments = source_text(source, artifact)
+        self.assertEqual(text, "داخل الصوت")
+        self.assertEqual(segments[0]["endMs"], 60000)
+
 
 if __name__ == "__main__":
     unittest.main()

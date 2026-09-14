@@ -143,9 +143,12 @@ def source_text(source, artifact=None):
         part = next((p for p in source["parts"] if p["order"] == segment["partOrder"]), None)
         if part is None or part["sha256"] != segment["sha256"]:
             raise ValueError("Unknown transcript part")
-        if not 0 <= segment["startMs"] < segment["endMs"] <= source["durationMs"] + 1000:
+        if not 0 <= segment["startMs"] < segment["endMs"]:
             raise ValueError("Invalid transcript timing")
-        if not part["offsetMs"] <= segment["startMs"] < part["offsetMs"] + part["durationMs"]:
+        part_end = part["offsetMs"] + part["durationMs"]
+        if segment["startMs"] >= part_end:
+            continue
+        if segment["startMs"] < part["offsetMs"]:
             raise ValueError("Segment starts outside its part")
         if segments and segment["startMs"] < segments[-1]["startMs"]:
             raise ValueError("Transcript is out of order")
@@ -153,7 +156,8 @@ def source_text(source, artifact=None):
             text += "\n"
         start = len(text)
         text += segment["text"]
-        segments.append({**segment, "charStart": start, "charEnd": len(text)})
+        segments.append({**segment, "endMs": min(segment["endMs"], part_end),
+                         "charStart": start, "charEnd": len(text)})
     return text, segments
 
 
