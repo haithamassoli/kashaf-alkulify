@@ -313,7 +313,7 @@ export default function Search({ endpoint }: { endpoint: string }) {
               id="search-query"
               maxLength={500}
               onChange={changeQuery}
-              placeholder="ابحث عن كلمة أو عبارة، مثل: كفارة اليمين"
+              placeholder="مثل: التأمين التعاوني"
               ref={input}
               required
               spellCheck={false}
