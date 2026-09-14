@@ -9,6 +9,7 @@ import {
   paginationResultValidator,
 } from "convex/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -433,6 +434,7 @@ export const setReviewStatus = mutation({
       approvedAt: args.reviewStatus === "approved" ? Date.now() : undefined,
       reviewStatus: args.reviewStatus,
     });
+    await ctx.scheduler.runAfter(0, internal.content.rebuildSeries, {});
 
     return null;
   },
@@ -492,6 +494,7 @@ export const setLessonTitle = mutation({
       titleLocked: true,
       titleParseConfidence: 1,
     });
+    await ctx.scheduler.runAfter(0, internal.content.rebuildSeries, {});
 
     return null;
   },
@@ -624,6 +627,7 @@ export const deleteLessonRows = internalMutation({
     // references the binary, and the parts about to be deleted must not count
     // as that reference.
     await retireLesson(ctx, args.id);
+    await ctx.scheduler.runAfter(0, internal.content.rebuildSeries, {});
 
     const r2Keys = [];
 

@@ -1,8 +1,17 @@
-import { ConvexProvider, useQuery } from "convex/react";
+import { ConvexProvider, usePaginatedQuery } from "convex/react";
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useDeferredValue,
+  useState,
+} from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 import { convex } from "../lib/convex";
 import { arabicDate } from "../lib/format";
+import { LoadMore, Skeleton } from "./list-parts";
+
+const PAGE_SIZE = 20;
 
 const SUMMARY_LENGTH = 180;
 
@@ -64,28 +73,51 @@ const BookCard = ({ book }: { book: Doc<"books"> }) => (
   </li>
 );
 
-const Books = () => {
-  const books = useQuery(api.books.list, {});
-
-  // `undefined` is the loading state: the subscription has not delivered yet.
-  if (books === undefined) {
-    return (
-      <p aria-live="polite" className="mt-6 text-muted text-sm">
-        جارٍ التحميل…
-      </p>
-    );
-  }
-
-  if (books.length === 0) {
-    return <p className="mt-6 text-muted text-sm">لا توجد كتب بعد.</p>;
-  }
+const Books = (): ReactNode => {
+  const [filter, setFilter] = useState("");
+  const search = useDeferredValue(filter.trim());
+  const { loadMore, results, status } = usePaginatedQuery(
+    api.books.list,
+    { search },
+    { initialNumItems: PAGE_SIZE }
+  );
+  const handleFilter = (event: ChangeEvent<HTMLInputElement>) =>
+    setFilter(event.target.value);
+  const handleMore = () => loadMore(PAGE_SIZE);
 
   return (
-    <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-      {books.map((book) => (
-        <BookCard book={book} key={book._id} />
-      ))}
-    </ul>
+    <>
+      <label className="sr-only" htmlFor="book-filter">
+        ابحث في الكتب
+      </label>
+      <input
+        autoComplete="off"
+        className="mt-6 w-full rounded-xl border border-border-strong bg-surface px-4 py-3 text-base placeholder:text-muted"
+        data-search-input
+        id="book-filter"
+        onChange={handleFilter}
+        placeholder="ابحث في الكتب"
+        type="search"
+        value={filter}
+      />
+
+      {status === "LoadingFirstPage" && (
+        <Skeleton className="mt-6 grid gap-3 sm:grid-cols-2" rows={4} />
+      )}
+      {status !== "LoadingFirstPage" && results.length === 0 && (
+        <p className="mt-6 text-muted text-sm">
+          {search ? "لا نتائج." : "لا توجد كتب بعد."}
+        </p>
+      )}
+
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        {results.map((book) => (
+          <BookCard book={book} key={book._id} />
+        ))}
+      </ul>
+
+      <LoadMore onMore={handleMore} status={status} />
+    </>
   );
 };
 

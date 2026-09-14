@@ -8,6 +8,7 @@ import {
 import { api } from "../../convex/_generated/api";
 import { convex } from "../lib/convex";
 import { Actions } from "./actions";
+import { LoadMore, Skeleton } from "./list-parts";
 
 const PAGE_SIZE = 30;
 const DATE = new Intl.DateTimeFormat("ar-u-nu-latn", {
@@ -50,11 +51,7 @@ const ArticleList = (): ReactNode => {
         value={search}
       />
 
-      {status === "LoadingFirstPage" && (
-        <p aria-live="polite" className="mt-6 text-muted text-sm">
-          جارٍ تحميل المقالات…
-        </p>
-      )}
+      {status === "LoadingFirstPage" && <Skeleton />}
 
       {status !== "LoadingFirstPage" && results.length === 0 && (
         <p className="mt-6 text-muted text-sm">لا نتائج.</p>
@@ -81,20 +78,7 @@ const ArticleList = (): ReactNode => {
         ))}
       </ul>
 
-      {status === "CanLoadMore" && (
-        <button
-          className="mt-4 min-h-11 w-full rounded-lg border border-border bg-surface px-4 text-sm transition-colors hover:bg-surface-2"
-          onClick={handleMore}
-          type="button"
-        >
-          تحميل المزيد
-        </button>
-      )}
-      {status === "LoadingMore" && (
-        <p aria-live="polite" className="mt-4 text-center text-muted text-sm">
-          جارٍ التحميل…
-        </p>
-      )}
+      <LoadMore onMore={handleMore} status={status} />
     </>
   );
 };
@@ -103,11 +87,7 @@ const ArticleDetail = ({ id }: { id: string }): ReactNode => {
   const article = useQuery(api.content.article, { id });
 
   if (article === undefined) {
-    return (
-      <p aria-live="polite" className="mt-8 text-muted text-sm">
-        جارٍ تحميل المقالة…
-      </p>
-    );
+    return <Skeleton className="mt-8" rows={1} />;
   }
 
   if (article === null) {

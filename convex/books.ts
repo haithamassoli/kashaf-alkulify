@@ -1,12 +1,27 @@
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { type MutationCtx, mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  type MutationCtx,
+  mutation,
+  query,
+} from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
+import { normalize } from "./lib/normalize";
 import schema, { bookValidator } from "./schema";
 
-const PUBLIC_PAGE_SIZE = 200;
 const ADMIN_PAGE_SIZE = 500;
 
 const bookDoc = schema.doc("books");
+
+export const searchText = (book: {
+  categories: string[];
+  description: string;
+  title: string;
+}) => normalize([book.title, ...book.categories, book.description].join(" "));
 
 /** Highest `order` currently in use, or -1 when the table is empty. */
 const highestOrder = async (ctx: MutationCtx): Promise<number> => {
@@ -27,15 +42,25 @@ const highestOrder = async (ctx: MutationCtx): Promise<number> => {
     .reduce((highest, book) => Math.max(highest, book.order), -1);
 };
 
-/** Published books, ordered by `order` ascending. Public. */
+/** Published books, by `order` or by relevance to `search`. Public. */
 export const list = query({
-  args: {},
-  handler: async (ctx) =>
-    await ctx.db
-      .query("books")
-      .withIndex("by_published_and_order", (q) => q.eq("published", true))
-      .take(PUBLIC_PAGE_SIZE),
-  returns: v.array(bookDoc),
+  args: { paginationOpts: paginationOptsValidator, search: v.string() },
+  handler: async (ctx, args) => {
+    const term = normalize(args.search.slice(0, 200));
+
+    return term
+      ? await ctx.db
+          .query("books")
+          .withSearchIndex("search_text", (q) =>
+            q.search("searchText", term).eq("published", true)
+          )
+          .paginate(args.paginationOpts)
+      : await ctx.db
+          .query("books")
+          .withIndex("by_published_and_order", (q) => q.eq("published", true))
+          .paginate(args.paginationOpts);
+  },
+  returns: paginationResultValidator(bookDoc),
 });
 
 /** A single published book by slug, or null. Public. */
@@ -93,6 +118,7 @@ export const create = mutation({
       ...fields,
       order: order ?? (await highestOrder(ctx)) + 1,
       published: published ?? false,
+      searchText: searchText(fields),
     });
   },
   returns: v.id("books"),
@@ -109,6 +135,11 @@ export const update = mutation({
 
     const { id, ...fields } = args;
     await ctx.db.patch("books", id, fields);
+    const book = await ctx.db.get("books", id);
+
+    if (book !== null) {
+      await ctx.db.patch("books", id, { searchText: searchText(book) });
+    }
 
     return null;
   },
@@ -140,4 +171,21 @@ export const reorder = mutation({
     return null;
   },
   returns: v.null(),
+});
+
+/** Fills `searchText` on books written before it existed. */
+export const backfillSearchText = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const books = await ctx.db.query("books").take(ADMIN_PAGE_SIZE);
+
+    await Promise.all(
+      books.map((book) =>
+        ctx.db.patch("books", book._id, { searchText: searchText(book) })
+      )
+    );
+
+    return books.length;
+  },
+  returns: v.number(),
 });

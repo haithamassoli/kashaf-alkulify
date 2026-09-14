@@ -43,9 +43,17 @@ const schema = defineSchema({
     .index("by_message", ["messageId"])
     .index("by_channel_date", ["channelId", "date"])
     .searchIndex("search_title", { searchField: "normalizedTitle" }),
-  books: defineTable(bookFields)
+  books: defineTable({
+    ...bookFields,
+    /** `normalize`d title, categories and description; set on every write. */
+    searchText: v.optional(v.string()),
+  })
     .index("by_slug", ["slug"])
-    .index("by_published_and_order", ["published", "order"]),
+    .index("by_published_and_order", ["published", "order"])
+    .searchIndex("search_text", {
+      filterFields: ["published"],
+      searchField: "searchText",
+    }),
 
   channels: defineTable({
     lastMessageId: v.number(),
@@ -245,6 +253,16 @@ const schema = defineSchema({
   })
     .index("by_stage_started", ["stage", "startedAt"])
     .index("by_run", ["runId"]),
+
+  /** Published series, derived from `lessons` by `content.rebuildSeries`. */
+  series: defineTable({
+    count: v.number(),
+    durationMs: v.number(),
+    name: v.string(),
+    normalizedName: v.string(),
+  })
+    .index("by_name", ["name"])
+    .searchIndex("search_name", { searchField: "normalizedName" }),
 
   telegramMessages: defineTable({
     channelId: v.id("channels"),

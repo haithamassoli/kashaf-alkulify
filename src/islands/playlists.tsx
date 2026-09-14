@@ -1,8 +1,15 @@
-import { ConvexProvider, useQuery } from "convex/react";
-import { type ChangeEvent, type ReactNode, useState } from "react";
+import { ConvexProvider, usePaginatedQuery, useQuery } from "convex/react";
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useDeferredValue,
+  useState,
+} from "react";
 import { api } from "../../convex/_generated/api";
 import { convex } from "../lib/convex";
-import { normalizeArabic } from "../lib/highlight";
+import { LoadMore, Skeleton } from "./list-parts";
+
+const PAGE_SIZE = 30;
 
 const number = (value: number) => value.toLocaleString("en-US");
 
@@ -21,21 +28,20 @@ const duration = (milliseconds: number): string => {
 };
 
 const SeriesList = (): ReactNode => {
-  const series = useQuery(api.content.series, {});
   const [filter, setFilter] = useState("");
-  const query = normalizeArabic(filter);
-  const rows =
-    series?.filter((item) => normalizeArabic(item.name).includes(query)) ?? [];
+  const search = useDeferredValue(filter.trim());
+  const {
+    loadMore,
+    results: rows,
+    status,
+  } = usePaginatedQuery(
+    api.content.series,
+    { search },
+    { initialNumItems: PAGE_SIZE }
+  );
   const handleFilter = (event: ChangeEvent<HTMLInputElement>) =>
     setFilter(event.target.value);
-
-  if (series === undefined) {
-    return (
-      <p aria-live="polite" className="mt-6 text-muted text-sm">
-        جارٍ تحميل القوائم…
-      </p>
-    );
-  }
+  const handleMore = () => loadMore(PAGE_SIZE);
 
   return (
     <>
@@ -57,32 +63,30 @@ const SeriesList = (): ReactNode => {
         value={filter}
       />
 
-      <p aria-live="polite" className="mt-3 text-muted text-sm">
-        <span className="digits">{number(rows.length)}</span> قائمة
-      </p>
-
-      {rows.length === 0 ? (
-        <p className="mt-4 text-muted text-sm">لا نتائج.</p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {rows.map((item) => (
-            <li key={item.name}>
-              <a
-                className="card block px-4 py-4 transition-colors hover:bg-surface-2"
-                href={`/p/?name=${encodeURIComponent(item.name)}`}
-              >
-                <span className="block font-medium leading-relaxed">
-                  {item.name}
-                </span>
-                <span className="mt-1 block text-muted text-sm">
-                  <span className="digits">{number(item.count)}</span> درس ·{" "}
-                  {duration(item.durationMs)}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+      {status === "LoadingFirstPage" && <Skeleton />}
+      {status !== "LoadingFirstPage" && rows.length === 0 && (
+        <p className="mt-6 text-muted text-sm">لا نتائج.</p>
       )}
+      <ul className="mt-4 space-y-2">
+        {rows.map((item) => (
+          <li key={item.name}>
+            <a
+              className="card block px-4 py-4 transition-colors hover:bg-surface-2"
+              href={`/p/?name=${encodeURIComponent(item.name)}`}
+            >
+              <span className="block font-medium leading-relaxed">
+                {item.name}
+              </span>
+              <span className="mt-1 block text-muted text-sm">
+                <span className="digits">{number(item.count)}</span> درس ·{" "}
+                {duration(item.durationMs)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <LoadMore onMore={handleMore} status={status} />
     </>
   );
 };
@@ -91,11 +95,7 @@ const SeriesDetail = ({ name }: { name: string }): ReactNode => {
   const lessons = useQuery(api.content.seriesLessons, { name });
 
   if (lessons === undefined) {
-    return (
-      <p aria-live="polite" className="mt-6 text-muted text-sm">
-        جارٍ تحميل دروس القائمة…
-      </p>
-    );
+    return <Skeleton className="mt-24 space-y-2" />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { type Infer, v } from "convex/values";
 import { internalMutation } from "./_generated/server";
+import { searchText } from "./books";
 import type { bookSeedValidator } from "./schema";
 
 type BookSeed = Infer<typeof bookSeedValidator>;
@@ -171,7 +172,12 @@ export const seed = internalMutation({
     const existingSlugs = new Set(existing.map((book) => book.slug));
 
     const toInsert = seedBooks
-      .map((book, index) => ({ ...book, order: index, published: true }))
+      .map((book, index) => ({
+        ...book,
+        order: index,
+        published: true,
+        searchText: searchText(book),
+      }))
       .filter((book) => !existingSlugs.has(book.slug));
 
     await Promise.all(toInsert.map((book) => ctx.db.insert("books", book)));
