@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { handedTitle } from "../lib/handed-title";
 import { highlightWords, normalizeArabic } from "../lib/highlight";
 import {
   PLAYER_SLOTS,
@@ -121,7 +122,10 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
   const [lesson, setLesson] = useState<LessonData | null>(null);
   const [partIndex, setPartIndex] = useState(0);
   const [filter, setFilter] = useState("");
-  const [arrivalQuery, setArrivalQuery] = useState("");
+  const [arrivalQuery] = useState(
+    () => new URLSearchParams(window.location.search).get("q")?.trim() ?? ""
+  );
+  const [handed] = useState(handedTitle);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(-1);
   const deferredFilter = useDeferredValue(filter);
@@ -138,8 +142,6 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
     const controller = new AbortController();
     const seconds = Number(params.get("t"));
     const start = Number.isFinite(seconds) ? Math.max(0, seconds * 1000) : 0;
-
-    setArrivalQuery(params.get("q")?.trim() ?? "");
 
     fetch(`${endpoint}/lesson`, {
       body: JSON.stringify({ sourceId }),
@@ -358,25 +360,8 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
     );
   }
 
-  if (!(lesson && current)) {
-    return (
-      <p className="mt-16 flex items-center justify-center gap-2 text-muted">
-        <Loader2 aria-hidden="true" className="size-5 animate-spin" />
-        جارٍ تجهيز الدرس…
-      </p>
-    );
-  }
-
-  const normalizedFilter = normalizeArabic(deferredFilter);
-  const matches = lesson.segments.map(
-    (segment) =>
-      !normalizedFilter ||
-      normalizeArabic(segment.text).includes(normalizedFilter)
-  );
-  const resultCount = matches.filter(Boolean).length;
-
-  return (
-    <div className="pt-8 pb-36 lg:pb-0">
+  const header = (title: string) => (
+    <>
       <a
         className="inline-flex min-h-11 items-center text-muted text-sm hover:text-fg"
         href="/"
@@ -391,9 +376,44 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
         </p>
       )}
 
-      <h1 className="mt-3 font-semibold text-2xl leading-relaxed tracking-tight">
-        {lesson.title}
+      <h1
+        className="mt-3 font-semibold text-2xl leading-relaxed tracking-tight"
+        data-vt-title
+      >
+        {title}
       </h1>
+    </>
+  );
+
+  if (!(lesson && current)) {
+    const loading = (
+      <p className="mt-16 flex items-center justify-center gap-2 text-muted">
+        <Loader2 aria-hidden="true" className="size-5 animate-spin" />
+        جارٍ تجهيز الدرس…
+      </p>
+    );
+
+    return handed === undefined ? (
+      loading
+    ) : (
+      <div className="pt-8">
+        {header(handed)}
+        {loading}
+      </div>
+    );
+  }
+
+  const normalizedFilter = normalizeArabic(deferredFilter);
+  const matches = lesson.segments.map(
+    (segment) =>
+      !normalizedFilter ||
+      normalizeArabic(segment.text).includes(normalizedFilter)
+  );
+  const resultCount = matches.filter(Boolean).length;
+
+  return (
+    <div className="pt-8 pb-36 lg:pb-0">
+      {header(lesson.title)}
       <p className="mt-1 flex flex-wrap items-center gap-x-4 text-muted text-sm">
         <span className="digits">{timestamp(lesson.durationMs)}</span>
         {lesson.url && (

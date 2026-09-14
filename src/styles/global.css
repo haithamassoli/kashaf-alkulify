@@ -286,6 +286,10 @@
 @view-transition {
   navigation: auto;
 }
+/* عنوانُ الصفحة يستقبل عنوانَ البطاقة المنقورة؛ اسمُ المصدر يُعيَّن عند pageswap في Base.astro. */
+h1[data-vt-title] {
+  view-transition-name: page-title;
+}
 /* قاعدةُ `*` أعلاه لا تطال زائفاتِ ::view-transition، فالسكونُ هنا صريح. */
 @media (prefers-reduced-motion: reduce) {
   @view-transition {

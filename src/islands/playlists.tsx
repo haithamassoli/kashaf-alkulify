@@ -74,7 +74,7 @@ const SeriesList = (): ReactNode => {
               className="card block px-4 py-4 transition-colors hover:bg-surface-2"
               href={`/p/?name=${encodeURIComponent(item.name)}`}
             >
-              <span className="block font-medium leading-relaxed">
+              <span className="block font-medium leading-relaxed" data-vt-title>
                 {item.name}
               </span>
               <span className="mt-1 block text-muted text-sm">
@@ -94,10 +94,6 @@ const SeriesList = (): ReactNode => {
 const SeriesDetail = ({ name }: { name: string }): ReactNode => {
   const lessons = useQuery(api.content.seriesLessons, { name });
 
-  if (lessons === undefined) {
-    return <Skeleton className="mt-24 space-y-2" />;
-  }
-
   return (
     <>
       <a
@@ -106,16 +102,23 @@ const SeriesDetail = ({ name }: { name: string }): ReactNode => {
       >
         القوائم
       </a>
-      <h1 className="mt-2 font-semibold text-2xl tracking-tight sm:text-3xl">
+      <h1
+        className="mt-2 font-semibold text-2xl tracking-tight sm:text-3xl"
+        data-vt-title
+      >
         {name}
       </h1>
-      <p className="mt-2 text-muted text-sm">
-        <span className="digits">{number(lessons.length)}</span> درس
-      </p>
+      {lessons === undefined && <Skeleton className="mt-6 space-y-2" />}
+      {lessons !== undefined && (
+        <p className="mt-2 text-muted text-sm">
+          <span className="digits">{number(lessons.length)}</span> درس
+        </p>
+      )}
 
-      {lessons.length === 0 ? (
+      {lessons?.length === 0 && (
         <p className="mt-6 text-muted text-sm">لم نجد هذه القائمة.</p>
-      ) : (
+      )}
+      {lessons !== undefined && lessons.length > 0 && (
         <ol className="mt-6 space-y-2">
           {lessons.map((lesson) => (
             <li key={lesson.id}>
@@ -129,7 +132,10 @@ const SeriesDetail = ({ name }: { name: string }): ReactNode => {
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium leading-relaxed">
+                  <span
+                    className="block font-medium leading-relaxed"
+                    data-vt-title
+                  >
                     {lesson.title || "درس بلا عنوان"}
                   </span>
                   <span className="mt-1 block text-muted text-sm">

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { api } from "../../convex/_generated/api";
 import { convex } from "../lib/convex";
+import { handedTitle } from "../lib/handed-title";
 import { Actions } from "./actions";
 import { LoadMore, Skeleton } from "./list-parts";
 
@@ -64,7 +65,7 @@ const ArticleList = (): ReactNode => {
               className="card block px-4 py-3 transition-colors hover:bg-surface-2"
               href={`/a/?id=${article.id}`}
             >
-              <span className="block font-medium leading-relaxed">
+              <span className="block font-medium leading-relaxed" data-vt-title>
                 {article.title}
               </span>
               <span className="mt-1 block text-muted text-sm">
@@ -85,8 +86,10 @@ const ArticleList = (): ReactNode => {
 
 const ArticleDetail = ({ id }: { id: string }): ReactNode => {
   const article = useQuery(api.content.article, { id });
+  const [handed] = useState(handedTitle);
+  const title = article?.title ?? handed;
 
-  if (article === undefined) {
+  if (article === undefined && title === undefined) {
     return <Skeleton className="mt-8" rows={1} />;
   }
 
@@ -115,29 +118,38 @@ const ArticleDetail = ({ id }: { id: string }): ReactNode => {
       <span className="mt-3 block w-fit rounded-full bg-surface-2 px-3 py-1 text-muted text-xs">
         مقالة
       </span>
-      <h1 className="mt-4 font-semibold text-xl leading-relaxed sm:text-2xl">
-        {article.title}
+      <h1
+        className="mt-4 font-semibold text-xl leading-relaxed sm:text-2xl"
+        data-vt-title
+      >
+        {title}
       </h1>
-      <div className="mt-1 flex flex-wrap items-center gap-x-5 text-muted text-sm">
-        <bdi>{date(article.date)}</bdi>
-        <a
-          className="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
-          href={article.telegramUrl}
-          rel="noopener"
-          target="_blank"
-        >
-          المصدر
-        </a>
-      </div>
-      <Actions
-        body={article.text}
-        href={`/a/?id=${encodeURIComponent(id)}`}
-        kind="a"
-        title={article.title}
-      />
-      <div className="prose-read mt-6 max-w-none whitespace-pre-wrap text-fg">
-        {article.text}
-      </div>
+      {article === undefined ? (
+        <Skeleton className="mt-4" rows={1} />
+      ) : (
+        <>
+          <div className="mt-1 flex flex-wrap items-center gap-x-5 text-muted text-sm">
+            <bdi>{date(article.date)}</bdi>
+            <a
+              className="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
+              href={article.telegramUrl}
+              rel="noopener"
+              target="_blank"
+            >
+              المصدر
+            </a>
+          </div>
+          <Actions
+            body={article.text}
+            href={`/a/?id=${encodeURIComponent(id)}`}
+            kind="a"
+            title={article.title}
+          />
+          <div className="prose-read mt-6 max-w-none whitespace-pre-wrap text-fg">
+            {article.text}
+          </div>
+        </>
+      )}
     </article>
   );
 };

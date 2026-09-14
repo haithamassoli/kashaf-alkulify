@@ -328,7 +328,7 @@ export default function Search({ endpoint }: { endpoint: string }) {
             scope === "audio" ? lessonHref(hit, asked) : hit.url || undefined;
           const content = (
             <>
-              <h2 className="font-medium text-base text-fg">
+              <h2 className="font-medium text-base text-fg" data-vt-title>
                 {highlightWords(hit.title, asked)}
               </h2>
               <p className="prose-read mt-2 line-clamp-4 whitespace-pre-wrap text-muted">
