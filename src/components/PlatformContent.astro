@@ -72,19 +72,22 @@ const cumulative = [
 ];
 
 const maxSeriesHours = Math.max(...series.map(({ hours }) => hours));
-const left = 24;
-const right = 460;
-const top = 24;
-const bottom = 274;
+// Time flows right to left: 2017 sits at the start (right) edge in RTL.
+const left = 16;
+const right = 456;
+const top = 20;
+const bottom = 320;
 const maxHours = 2500;
+const yOf = (hours: number) => bottom - (hours / maxHours) * (bottom - top);
 const points = cumulative.map(({ hours }, index) => ({
-  x: left + (index * (right - left)) / (cumulative.length - 1),
-  y: bottom - (hours / maxHours) * (bottom - top),
+  x: right - (index * (right - left)) / (cumulative.length - 1),
+  y: yOf(hours),
 }));
 const line = points
   .map(({ x, y }, index) => `${index ? "L" : "M"}${x},${y}`)
   .join(" ");
-const area = `${line} L${right},${bottom} L${left},${bottom} Z`;
+const area = `${line} L${left},${bottom} L${right},${bottom} Z`;
+const last = points.at(-1) ?? { x: left, y: top };
 
 if (cumulative.at(-1)?.hours !== 2300 || series.length !== 8) {
   throw new Error("Platform statistics are incomplete");
@@ -97,89 +100,126 @@ if (cumulative.at(-1)?.hours !== 2300 || series.length !== 8) {
 
   <ul class="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
     {cards.map((card) => (
-        <li class="card flex items-center justify-between gap-3 px-4 py-4">
+        <li class="card flex items-center gap-3 p-4">
+          <span
+            class="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.6"
+              viewBox="0 0 24 24"
+            >
+              {card.icon.map((path) => <path d={path} />)}
+            </svg>
+          </span>
           <div class="min-w-0">
             <span class="block text-muted text-sm">{card.label}</span>
             <span
               class:list={[
-                "mt-1 block font-semibold text-xl",
+                "mt-0.5 block font-semibold text-lg md:text-xl",
                 !card.date && "digits",
               ]}>{card.value}</span
             >
           </div>
-          <svg
-            aria-hidden="true"
-            class="size-5 shrink-0 text-muted"
-            fill="none"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.6"
-            viewBox="0 0 24 24"
-          >
-            {card.icon.map((path) => <path d={path} />)}
-          </svg>
         </li>
       ))}
   </ul>
 
   <div class="mt-3 grid gap-3 md:grid-cols-2">
-    <section class="card p-4">
+    <section class="card p-5">
       <h3 class="font-semibold text-base">أكبر السلاسل تفريغًا</h3>
       <p class="mt-1 text-muted text-sm">أطول 8 سلاسل من أصل 292</p>
-      <ol
-        aria-label="أكبر السلاسل حسب الساعات المفرغة"
-        class="mt-4 space-y-2.5"
-      >
+      <ol aria-label="أكبر السلاسل حسب الساعات المفرغة" class="mt-5 space-y-3">
         {series.map((item) => (
-            <li class="grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-3">
-              <div class="h-4 overflow-hidden rounded-sm bg-surface-2">
+            <li class="grid grid-cols-[7.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
+              <span class="truncate" title={item.name}>{item.name}</span>
+              <div class="h-2.5 overflow-hidden rounded-full bg-surface-2">
                 <div
-                  class="ms-auto h-full rounded-sm bg-accent"
+                  class="h-full rounded-full bg-accent"
                   style={`width: ${(item.hours / maxSeriesHours) * 100}%`}
                 />
               </div>
-              <span class="truncate text-muted text-sm" title={item.name}>{item.name}</span>
-              <span class="sr-only">{item.hours} ساعة</span>
+              <span class="digits text-end text-muted">
+                {item.hours}
+                <span class="sr-only">ساعة</span>
+              </span>
             </li>
           ))}
       </ol>
     </section>
 
-    <section class="card p-4">
-      <h3 class="font-semibold text-base">الساعات المفرَّغة تراكميًا</h3>
-      <p class="mt-1 text-muted text-sm">مجموع ساعات المحتوى سنةً بعد سنة</p>
+    <section class="card p-5">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="font-semibold text-base">الساعات المفرَّغة تراكميًا</h3>
+          <p class="mt-1 text-muted text-sm">مجموع ساعات المحتوى سنةً بعد سنة</p>
+        </div>
+        <span class="digits shrink-0 font-semibold text-accent text-xl">
+          {num(2300)}
+        </span>
+      </div>
       <svg
         aria-labelledby="cumulative-title cumulative-description"
-        class="mt-4 h-56 w-full"
+        class="mt-4 h-auto w-full"
+        direction="ltr"
         role="img"
-        viewBox="0 0 520 320"
+        viewBox="0 0 520 350"
       >
         <title id="cumulative-title">الساعات المفرغة تراكميًا</title>
         <desc id="cumulative-description">
           ارتفعت الساعات من 427 ساعة في 2017 إلى 2300 ساعة في 2026.
         </desc>
-        {[0, 1000, 2000, 2500].map((value) => {
-          const y = bottom - (value / maxHours) * (bottom - top);
-          return (
-            <g>
-              <line class="stroke-border" x1={left} x2={right} y1={y} y2={y} />
-              <text class="fill-muted text-[11px]" text-anchor="start" x="474" y={y + 4}>{num(value)}</text>
-            </g>
-          );
-        })}
-        <path class="fill-accent/10" d={area}></path>
+        {[0, 1000, 2000].map((value) => (
+          <g>
+            <line
+              class="stroke-border"
+              stroke-dasharray={value ? "4 4" : undefined}
+              x1={left}
+              x2={right}
+              y1={yOf(value)}
+              y2={yOf(value)}
+            />
+            <text
+              class="fill-muted text-[13px]"
+              text-anchor="end"
+              x="516"
+              y={yOf(value) + 4}
+            >
+              {num(value)}
+            </text>
+          </g>
+        ))}
+        <path class="fill-accent/15" d={area}></path>
         <path
           class="fill-none stroke-accent"
           d={line}
           stroke-linecap="round"
           stroke-linejoin="round"
-          stroke-width="2.5"
+          stroke-width="3"
         ></path>
+        <circle
+          class="fill-accent stroke-(--surface)"
+          cx={last.x}
+          cy={last.y}
+          r="5"
+          stroke-width="2.5"
+        ></circle>
         {cumulative.map((point, index) => {
           const coordinates = points[index];
-          return index % 2 === 0 || index === cumulative.length - 1 ? (
-            <text class="fill-muted text-[10px]" text-anchor="middle" x={coordinates.x} y="306">{point.label}</text>
+          return index % 3 === 0 ? (
+            <text
+              class="fill-muted text-[13px]"
+              text-anchor="middle"
+              x={coordinates.x}
+              y="344"
+            >
+              {point.label}
+            </text>
           ) : null;
         })}
       </svg>
