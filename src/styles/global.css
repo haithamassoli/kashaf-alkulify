@@ -230,6 +230,58 @@
   @apply mt-1 grid size-11 shrink-0 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:text-fg no-hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100;
 }
 
+@media print {
+  :root,
+  .dark {
+    --bg: #fff;
+    --surface: #fff;
+    --surface-2: #fff;
+    --border: #ddd;
+    --border-strong: #999;
+    --fg: #000;
+    --muted: #444;
+    --accent: #000;
+    --accent-soft: transparent;
+    color-scheme: light;
+  }
+
+  header,
+  footer,
+  #toast,
+  [data-print-hide],
+  .cue-copy {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  [data-lesson-grid] {
+    display: block !important;
+  }
+
+  #cues {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  @layer base {
+    #cues > li[hidden] {
+      display: flex !important;
+    }
+  }
+
+  .cue {
+    break-inside: avoid;
+  }
+
+  .cue-on {
+    border-color: transparent !important;
+  }
+}
+
 /* انتقالُ التصفّح: يتكفّل به المتصفّحُ وحده — لا موجِّهَ ولا سكربت. */
 @view-transition {
   navigation: auto;

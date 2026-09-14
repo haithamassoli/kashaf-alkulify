@@ -1,0 +1,21 @@
+---
+import { Articles } from "../../islands/articles";
+import Base from "../../layouts/Base.astro";
+import { breadcrumb, SHEIKH, SITE_URL } from "../../lib/seo";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@id": `${SITE_URL}/a/#collection`,
+  "@type": "CollectionPage",
+  inLanguage: "ar",
+  name: "المقالات",
+};
+---
+
+<Base
+  description={`مقالات ${SHEIKH}.`}
+  schema={[schema, breadcrumb([["المقالات", "/a/"]])]}
+  title="المقالات"
+>
+  <Articles client:only="react" />
+</Base>

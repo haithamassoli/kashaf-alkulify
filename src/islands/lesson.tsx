@@ -25,6 +25,7 @@ import {
   PLAYER_TRANSLATIONS,
   usePlayerTheme,
 } from "../lib/player";
+import { Actions } from "./actions";
 
 interface Part {
   durationMs: number;
@@ -375,7 +376,7 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
   const resultCount = matches.filter(Boolean).length;
 
   return (
-    <div className="pt-8">
+    <div className="pt-8 pb-36 lg:pb-0">
       <a
         className="inline-flex min-h-11 items-center text-muted text-sm hover:text-fg"
         href="/"
@@ -407,16 +408,29 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
         )}
       </p>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2 lg:gap-8">
+      <Actions
+        body={lesson.segments
+          .map((segment) => `[${timestamp(segment.startMs)}] ${segment.text}`)
+          .join("\n")}
+        href={`/v/?id=${encodeURIComponent(lesson.sourceId)}`}
+        kind="v"
+        title={lesson.title}
+      />
+
+      <div
+        className="mt-6 grid items-start gap-6 lg:grid-cols-2 lg:gap-8"
+        data-lesson-grid
+      >
         <section
           aria-label="المشغل الصوتي"
-          className="sticky top-16 z-10 -mx-4 bg-bg px-4 pb-3 lg:top-20 lg:mx-0 lg:px-0"
+          className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-bg/95 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgb(0_0_0/0.08)] backdrop-blur lg:sticky lg:top-20 lg:z-10 lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
+          data-print-hide
         >
-          <div className="rounded-xl border border-border bg-surface-2 p-3">
+          <div className="mx-auto max-w-xl rounded-xl bg-surface-2 p-2 lg:mx-0 lg:max-w-none lg:border lg:border-border lg:p-3">
             <div dir="ltr">
               <MediaPlayer
                 artist={`الجزء ${current.order + 1} من ${lesson.parts.length}`}
-                className="w-full"
+                className="[&_.vds-time-slider]:visible! [&_.vds-time-slider]:transform-none! [&_.vds-volume]:hidden! sm:[&_.vds-volume]:flex! w-full [--audio-bg:var(--surface)] [--audio-border:0] [--audio-brand:var(--accent)] [--audio-controls-color:var(--fg)] [--audio-filter:none] [--audio-font-family:var(--font-sans)] [--audio-play-button-bg:var(--accent)] [--audio-play-button-color:var(--accent-fg)] [--audio-play-button-size:2.75rem] [&_.vds-time-slider]:max-w-full! [&_.vds-time-slider]:opacity-100!"
                 crossOrigin={null}
                 key={current.url}
                 onCanPlay={handleCanPlay}
@@ -472,7 +486,10 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
         </section>
 
         <section aria-label="التفريغ" className="min-w-0">
-          <div className="-mx-2 flex flex-wrap items-center gap-x-4 gap-y-2 bg-bg px-2 py-2 lg:sticky lg:top-14 lg:z-20">
+          <div
+            className="-mx-2 flex flex-wrap items-center gap-x-4 gap-y-2 bg-bg px-2 py-2 lg:sticky lg:top-14 lg:z-20"
+            data-print-hide
+          >
             <input
               aria-label="ابحث داخل الدرس"
               className="h-11 min-w-0 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm placeholder:text-muted"
@@ -493,7 +510,11 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
             </label>
           </div>
 
-          <p aria-live="polite" className="min-h-6 pt-1 text-muted text-sm">
+          <p
+            aria-live="polite"
+            className="min-h-6 pt-1 text-muted text-sm"
+            data-print-hide
+          >
             {filter.trim() &&
               (resultCount > 0
                 ? `النتائج: ${resultCount}`
@@ -502,6 +523,7 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
 
           <ol
             className="relative mt-1 h-[55dvh] overflow-y-auto overscroll-contain rounded-lg lg:h-[calc(100dvh-10rem)] lg:pe-1"
+            id="cues"
             ref={list}
           >
             {lesson.segments.map((segment, index) => (

@@ -1,0 +1,15 @@
+---
+import { SavedList } from "../islands/saved-list";
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  description="إشاراتك المرجعية المحفوظة على هذا الجهاز."
+  noindex
+  title="المحفوظات"
+>
+  <h1 class="mt-10 text-2xl font-semibold tracking-tight sm:text-3xl">
+    المحفوظات
+  </h1>
+  <SavedList client:only="react" />
+</Base>
