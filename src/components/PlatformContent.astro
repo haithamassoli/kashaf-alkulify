@@ -1,5 +1,6 @@
 ---
 import { arabicDate } from "../lib/format";
+import { cumulative, series } from "../lib/platform-stats";
 
 const num = (value: number) => value.toLocaleString("en-US");
 
@@ -47,47 +48,8 @@ const cards = [
   },
 ];
 
-const series = [
-  { hours: 126, name: "الدارمي" },
-  { hours: 111.5, name: "المغني" },
-  { hours: 59.5, name: "مراجعات ومناصحات" },
-  { hours: 51.9, name: "تاريخ الإسلام" },
-  { hours: 48.1, name: "سيرة ابن هشام" },
-  { hours: 47.1, name: "السنة لأبي بكر الخلال" },
-  { hours: 44.1, name: "السنة" },
-  { hours: 43.5, name: "الجامع" },
-];
-
-const cumulative = [
-  { hours: 427, label: "2017" },
-  { hours: 586, label: "2018" },
-  { hours: 723, label: "2019" },
-  { hours: 871, label: "2020" },
-  { hours: 1039, label: "2021" },
-  { hours: 1199, label: "2022" },
-  { hours: 1338, label: "2023" },
-  { hours: 1526, label: "2024" },
-  { hours: 1917, label: "2025" },
-  { hours: 2300, label: "2026" },
-];
-
-const maxSeriesHours = Math.max(...series.map(({ hours }) => hours));
-// Time flows right to left: 2017 sits at the start (right) edge in RTL.
-const left = 16;
-const right = 456;
-const top = 20;
-const bottom = 320;
-const maxHours = 2500;
-const yOf = (hours: number) => bottom - (hours / maxHours) * (bottom - top);
-const points = cumulative.map(({ hours }, index) => ({
-  x: right - (index * (right - left)) / (cumulative.length - 1),
-  y: yOf(hours),
-}));
-const line = points
-  .map(({ x, y }, index) => `${index ? "L" : "M"}${x},${y}`)
-  .join(" ");
-const area = `${line} L${left},${bottom} L${right},${bottom} Z`;
-const last = points.at(-1) ?? { x: left, y: top };
+const barsAlt = `أكبر ${series.length} سلاسل بالساعات المفرَّغة: ${series.map((item) => `${item.name} ${item.hours} ساعة`).join("، ")}.`;
+const cumAlt = `الساعات المفرَّغة تراكميًا من ${cumulative[0]?.label} إلى ${cumulative.at(-1)?.label}، وصولًا إلى ${cumulative.at(-1)?.hours} ساعة.`;
 
 if (cumulative.at(-1)?.hours !== 2300 || series.length !== 8) {
   throw new Error("Platform statistics are incomplete");
@@ -130,99 +92,231 @@ if (cumulative.at(-1)?.hours !== 2300 || series.length !== 8) {
       ))}
   </ul>
 
-  <div class="mt-3 grid gap-3 md:grid-cols-2">
-    <section class="card p-5">
+  <div class="mt-3 grid gap-3 md:grid-cols-2" id="platform-charts">
+    <section class="card p-4">
       <h3 class="font-semibold text-base">أكبر السلاسل تفريغًا</h3>
-      <p class="mt-1 text-muted text-sm">أطول 8 سلاسل من أصل 292</p>
-      <ol aria-label="أكبر السلاسل حسب الساعات المفرغة" class="mt-5 space-y-3">
-        {series.map((item) => (
-            <li class="grid grid-cols-[7.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
-              <span class="truncate" title={item.name}>{item.name}</span>
-              <div class="h-2.5 overflow-hidden rounded-full bg-surface-2">
-                <div
-                  class="h-full rounded-full bg-accent"
-                  style={`width: ${(item.hours / maxSeriesHours) * 100}%`}
-                />
-              </div>
-              <span class="digits text-end text-muted">
-                {item.hours}
-                <span class="sr-only">ساعة</span>
-              </span>
-            </li>
-          ))}
-      </ol>
+      <p class="mt-1 text-muted text-sm">
+        أطول {series.length} سلاسل بالساعات المفرَّغة من أصل 292
+      </p>
+      <div class="relative mt-4 h-56">
+        <canvas aria-label={barsAlt} id="chart-series" role="img"></canvas>
+      </div>
     </section>
 
-    <section class="card p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <h3 class="font-semibold text-base">الساعات المفرَّغة تراكميًا</h3>
-          <p class="mt-1 text-muted text-sm">مجموع ساعات المحتوى سنةً بعد سنة</p>
-        </div>
-        <span class="digits shrink-0 font-semibold text-accent text-xl">
-          {num(2300)}
-        </span>
+    <section class="card p-4">
+      <h3 class="font-semibold text-base">الساعات المفرَّغة تراكميًا</h3>
+      <p class="mt-1 text-muted text-sm">مجموع الساعات المفرَّغة سنةً بعد سنة</p>
+      <div class="relative mt-4 h-56">
+        <canvas aria-label={cumAlt} id="chart-cumulative" role="img"></canvas>
       </div>
-      <svg
-        aria-labelledby="cumulative-title cumulative-description"
-        class="mt-4 h-auto w-full"
-        direction="ltr"
-        role="img"
-        viewBox="0 0 520 350"
-      >
-        <title id="cumulative-title">الساعات المفرغة تراكميًا</title>
-        <desc id="cumulative-description">
-          ارتفعت الساعات من 427 ساعة في 2017 إلى 2300 ساعة في 2026.
-        </desc>
-        {[0, 1000, 2000].map((value) => (
-          <g>
-            <line
-              class="stroke-border"
-              stroke-dasharray={value ? "4 4" : undefined}
-              x1={left}
-              x2={right}
-              y1={yOf(value)}
-              y2={yOf(value)}
-            />
-            <text
-              class="fill-muted text-[13px]"
-              text-anchor="end"
-              x="516"
-              y={yOf(value) + 4}
-            >
-              {num(value)}
-            </text>
-          </g>
-        ))}
-        <path class="fill-accent/15" d={area}></path>
-        <path
-          class="fill-none stroke-accent"
-          d={line}
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="3"
-        ></path>
-        <circle
-          class="fill-accent stroke-(--surface)"
-          cx={last.x}
-          cy={last.y}
-          r="5"
-          stroke-width="2.5"
-        ></circle>
-        {cumulative.map((point, index) => {
-          const coordinates = points[index];
-          return index % 3 === 0 ? (
-            <text
-              class="fill-muted text-[13px]"
-              text-anchor="middle"
-              x={coordinates.x}
-              y="344"
-            >
-              {point.label}
-            </text>
-          ) : null;
-        })}
-      </svg>
     </section>
   </div>
 </section>
+
+<script>
+  import type { TooltipItem } from "chart.js";
+  import { cumulative, series } from "../lib/platform-stats";
+
+  const truncate = (name: string) =>
+    name.length > 20 ? `${name.slice(0, 19).trimEnd()}…` : name;
+
+  // Chart.js re-runs scriptable options on every update, so colours are
+  // functions reading the palette captured at the last theme flip.
+  const readTheme = () => {
+    const style = getComputedStyle(document.documentElement);
+    const token = (name: string) => style.getPropertyValue(name).trim();
+    return {
+      accent: token("--accent"),
+      border: token("--border"),
+      fg: token("--fg"),
+      muted: token("--muted"),
+      surface: token("--surface"),
+    };
+  };
+  let theme = readTheme();
+
+  const load = async () => {
+    const {
+      BarController,
+      BarElement,
+      CategoryScale,
+      Chart,
+      Filler,
+      LinearScale,
+      LineController,
+      LineElement,
+      PointElement,
+      Tooltip,
+    } = await import("chart.js");
+    Chart.register(
+      BarController,
+      BarElement,
+      CategoryScale,
+      Filler,
+      LinearScale,
+      LineController,
+      LineElement,
+      PointElement,
+      Tooltip
+    );
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.font.size = 12;
+    Chart.defaults.locale = "en-US";
+    Chart.defaults.animation = matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? false
+      : { duration: 400 };
+    // Scriptable colours cannot be interpolated; animating them breaks rendering.
+    Chart.defaults.animations.colors = false;
+
+    const tooltip = {
+      backgroundColor: () => theme.surface,
+      bodyColor: () => theme.fg,
+      borderColor: () => theme.border,
+      borderWidth: 1,
+      displayColors: false,
+      padding: 10,
+      rtl: true,
+      textDirection: "rtl",
+      titleColor: () => theme.fg,
+    };
+    // U+200F keeps the number on the right of the unit inside the RTL tooltip.
+    const hoursLabel = (value: number | null) =>
+      `\u200f${(value ?? 0).toLocaleString("en-US")} ساعة`;
+    const ticks = (extra = {}) => ({
+      color: () => theme.muted,
+      maxTicksLimit: 5,
+      ...extra,
+    });
+    const grid = { color: () => theme.border };
+    // Axis borders are not scriptable in the types; a getter stays live across updates.
+    const border = {
+      get color() {
+        return theme.border;
+      },
+    };
+
+    const seriesChart = new Chart("chart-series", {
+      data: {
+        datasets: [
+          {
+            backgroundColor: () => theme.accent,
+            borderRadius: 4,
+            borderWidth: 0,
+            data: series.map((item) => item.hours),
+          },
+        ],
+        labels: series.map((item) => truncate(item.name)),
+      },
+      options: {
+        indexAxis: "y",
+        interaction: { axis: "y", intersect: false, mode: "index" },
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...tooltip,
+            callbacks: {
+              label: (item: TooltipItem<"bar">) => hoursLabel(item.parsed.x),
+              // The axis label is truncated; the tooltip shows the full name.
+              title: (items: TooltipItem<"bar">[]) =>
+                series[items[0]?.dataIndex ?? 0]?.name ?? "",
+            },
+          },
+        },
+        responsive: true,
+        scales: {
+          x: {
+            beginAtZero: true,
+            border,
+            grid,
+            reverse: true,
+            ticks: ticks({ precision: 0 }),
+          },
+          y: {
+            border,
+            grid: { display: false },
+            position: "right",
+            ticks: ticks({ autoSkip: false, maxTicksLimit: series.length }),
+          },
+        },
+      },
+      type: "bar",
+    });
+
+    const cumulativeChart = new Chart("chart-cumulative", {
+      data: {
+        datasets: [
+          {
+            backgroundColor: () => `${theme.accent}22`,
+            borderColor: () => theme.accent,
+            borderWidth: 2,
+            data: cumulative.map((point) => point.hours),
+            fill: true,
+            pointBackgroundColor: () => theme.accent,
+            pointHoverRadius: 4,
+            pointRadius: 0,
+            tension: 0.25,
+          },
+        ],
+        labels: cumulative.map((point) => point.label),
+      },
+      options: {
+        interaction: { intersect: false, mode: "index" },
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...tooltip,
+            callbacks: {
+              label: (item: TooltipItem<"line">) => hoursLabel(item.parsed.y),
+            },
+          },
+        },
+        responsive: true,
+        scales: {
+          x: {
+            border,
+            grid: { display: false },
+            reverse: true,
+            ticks: ticks({ maxRotation: 0 }),
+          },
+          y: {
+            beginAtZero: true,
+            border,
+            grid,
+            position: "right",
+            ticks: ticks(),
+          },
+        },
+      },
+      type: "line",
+    });
+
+    new MutationObserver(() => {
+      theme = readTheme();
+      for (const chart of [seriesChart, cumulativeChart]) {
+        chart.update("none");
+      }
+    }).observe(document.documentElement, {
+      attributeFilter: ["class"],
+      attributes: true,
+    });
+  };
+
+  const root = document.getElementById("platform-charts");
+  if (root) {
+    // Chart.js only downloads once the section is approached.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) {
+          return;
+        }
+        observer.disconnect();
+        load();
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(root);
+  }
+</script>
