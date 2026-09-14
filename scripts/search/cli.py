@@ -87,7 +87,7 @@ def prepare(args):
     inventory = read_json(STATE / "inventory.json")
     if inventory["deployment"] != os.environ["CONVEX_DEPLOYMENT"]:
         raise ValueError("Export belongs to another deployment")
-    generation = digest({"sources": selected, "config": config})[:20]
+    generation = digest({"sources": selected, "config": config, "deployment": inventory["deployment"]})[:20]
     directory = STATE / "releases" / generation
     directory.mkdir(parents=True, exist_ok=True)
     if (directory / "manifest.json").exists():
