@@ -1,7 +1,9 @@
+import { Check, Loader2, Search as SearchIcon, X } from "lucide-react";
 import {
   type ChangeEvent,
   type FormEvent,
   type MouseEvent,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -93,10 +95,94 @@ const resultMessage = (result: SearchResponse): string => {
   return notices.join(" ");
 };
 
+interface Options {
+  exact: boolean;
+  query: string;
+  scope: string;
+  spread: boolean;
+}
+
+const SCOPES = [
+  { label: "الدروس الصوتية", value: "audio" },
+  { label: "المقالات", value: "articles" },
+];
+
+const chip = (active: boolean): string =>
+  `inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors ${
+    active
+      ? "border-accent bg-accent-soft font-medium text-accent"
+      : "border-border text-muted hover:border-border-strong hover:text-fg"
+  }`;
+
+// The URL holds the search, so reloads, shared links and
+// "back to results" all land on the same search.
+const fromUrl = (): Options => {
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    exact: params.get("exact") === "1",
+    query: params.get("q")?.trim() ?? "",
+    scope: params.get("scope") === "articles" ? "articles" : "audio",
+    spread: params.get("all") === "1",
+  };
+};
+
+const toUrl = ({ exact, query, scope, spread }: Options) => {
+  const params = new URLSearchParams();
+
+  if (query) {
+    params.set("q", query);
+  }
+  if (scope !== "audio") {
+    params.set("scope", scope);
+  }
+  if (exact) {
+    params.set("exact", "1");
+  }
+  if (spread) {
+    params.set("all", "1");
+  }
+
+  const search = params.size > 0 ? `?${params}` : "";
+  history.replaceState(history.state, "", `${location.pathname}${search}`);
+};
+
+const fetchSearch = async (
+  endpoint: string,
+  { exact, query, scope, spread }: Options,
+  signal: AbortSignal
+): Promise<SearchResponse> => {
+  const response = await fetch(`${endpoint}/search`, {
+    body: JSON.stringify({
+      allOccurrences: spread,
+      mode: exact ? "phrase" : "hybrid",
+      query: query.trim(),
+      scope,
+    }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+    signal: AbortSignal.any([signal, AbortSignal.timeout(180_000)]),
+  });
+
+  if (!response.ok) {
+    throw new Error("Search unavailable");
+  }
+
+  const result: unknown = await response.json();
+
+  if (!isResponse(result)) {
+    throw new Error("Invalid search response");
+  }
+  return result;
+};
+
 export default function Search({ endpoint }: { endpoint: string }) {
-  const [scope, setScope] = useState("audio");
-  const [mode, setMode] = useState("hybrid");
-  const [occurrences, setOccurrences] = useState(false);
+  const [options, setOptions] = useState<Options>({
+    exact: false,
+    query: "",
+    scope: "audio",
+    spread: false,
+  });
   const [query, setQuery] = useState("");
   const [asked, setAsked] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
@@ -104,7 +190,9 @@ export default function Search({ endpoint }: { endpoint: string }) {
   const [message, setMessage] = useState("");
   const [visible, setVisible] = useState(20);
   const request = useRef<AbortController | null>(null);
+  const input = useRef<HTMLInputElement>(null);
   const results = useRef<HTMLDivElement>(null);
+  const { exact, scope, spread } = options;
 
   const reset = () => {
     request.current?.abort();
@@ -113,11 +201,14 @@ export default function Search({ endpoint }: { endpoint: string }) {
     setMessage("");
   };
 
-  const run = async (nextScope = scope) => {
-    const text = query.trim();
+  const run = async (next: Options, focusResults = true) => {
+    const text = next.query.trim();
 
+    setOptions(next);
+    toUrl({ ...next, query: text });
     reset();
     if (!(endpoint && text)) {
+      setAsked("");
       if (!endpoint) {
         setMessage("البحث قيد التجهيز. يرجى المحاولة لاحقًا.");
       }
@@ -130,30 +221,8 @@ export default function Search({ endpoint }: { endpoint: string }) {
     setBusy(true);
 
     try {
-      const response = await fetch(`${endpoint}/search`, {
-        body: JSON.stringify({
-          allOccurrences: occurrences,
-          mode,
-          query: text,
-          scope: nextScope,
-        }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-        signal: AbortSignal.any([
-          controller.signal,
-          AbortSignal.timeout(180_000),
-        ]),
-      });
+      const result = await fetchSearch(endpoint, next, controller.signal);
 
-      if (!response.ok) {
-        throw new Error("Search unavailable");
-      }
-
-      const result: unknown = await response.json();
-
-      if (!isResponse(result)) {
-        throw new Error("Invalid search response");
-      }
       if (controller.signal.aborted) {
         return;
       }
@@ -161,7 +230,9 @@ export default function Search({ endpoint }: { endpoint: string }) {
       setHits(result.hits);
       setVisible(20);
       setMessage(resultMessage(result));
-      requestAnimationFrame(() => results.current?.focus());
+      if (focusResults) {
+        requestAnimationFrame(() => results.current?.focus());
+      }
     } catch {
       if (!controller.signal.aborted) {
         setMessage("تعذّر إتمام البحث الآن. حاول مرة أخرى بعد قليل.");
@@ -173,33 +244,50 @@ export default function Search({ endpoint }: { endpoint: string }) {
     }
   };
 
+  // Restore a search from the URL (reload, shared link, back from a lesson).
+  useEffect(() => {
+    const saved = fromUrl();
+
+    setQuery(saved.query);
+    setOptions(saved);
+    if (saved.query) {
+      run(saved, false);
+    }
+  }, []);
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    run();
+    run({ ...options, query });
   };
 
-  const changeScope = (event: MouseEvent<HTMLButtonElement>) => {
-    const next = event.currentTarget.value;
+  // Filters re-run the last search right away instead of wiping the results.
+  const refine = (change: Partial<Options>) => {
+    const next = { ...options, ...change, query };
 
-    setScope(next);
-    if (query.trim()) {
-      run(next);
-    } else {
-      reset();
+    if (next.query.trim()) {
+      run(next, false);
+      return;
     }
+    setOptions(next);
+    toUrl(next);
   };
+
+  const changeScope = (event: MouseEvent<HTMLButtonElement>) =>
+    refine({ scope: event.currentTarget.value });
+
+  const toggleExact = () => refine({ exact: !exact });
+
+  const toggleSpread = () => refine({ spread: !spread });
 
   const changeQuery = (event: ChangeEvent<HTMLInputElement>) =>
     setQuery(event.target.value);
 
-  const changeMode = (event: ChangeEvent<HTMLInputElement>) => {
+  const clear = () => {
+    setQuery("");
+    setAsked("");
     reset();
-    setMode(event.target.checked ? "phrase" : "hybrid");
-  };
-
-  const changeOccurrences = (event: ChangeEvent<HTMLInputElement>) => {
-    reset();
-    setOccurrences(event.target.checked);
+    toUrl({ ...options, query: "" });
+    input.current?.focus();
   };
 
   const showMore = () => setVisible((current) => current + 20);
@@ -211,98 +299,108 @@ export default function Search({ endpoint }: { endpoint: string }) {
           <label className="sr-only" htmlFor="search-query">
             ابحث في نصوص الدروس والمقالات
           </label>
-          <div className="flex gap-2">
+          <div className="flex h-14 items-center gap-1 rounded-2xl border border-border-strong bg-surface ps-4 pe-1.5 shadow-sm transition-shadow focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25">
+            <SearchIcon
+              aria-hidden="true"
+              className="size-5 shrink-0 text-muted"
+            />
             <input
               autoComplete="off"
               autoFocus
-              className="h-12 min-w-0 flex-1 rounded-xl border border-border-strong bg-surface px-4 text-base placeholder:text-muted"
+              className="h-full min-w-0 flex-1 bg-transparent px-2 text-base outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
               data-search-input
               enterKeyHint="search"
               id="search-query"
               maxLength={500}
               onChange={changeQuery}
-              placeholder="مثال: كفارة اليمين"
+              placeholder="ابحث عن كلمة أو عبارة، مثل: كفارة اليمين"
+              ref={input}
               required
               spellCheck={false}
               type="search"
               value={query}
             />
+            {query && (
+              <button
+                aria-label="مسح البحث"
+                className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+                onClick={clear}
+                type="button"
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            )}
             <button
-              className="h-12 shrink-0 rounded-xl bg-accent px-6 font-medium text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-accent px-5 font-medium text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-50"
               disabled={busy || !query.trim()}
               type="submit"
             >
-              {busy ? "جارٍ البحث…" : "بحث"}
+              {busy && (
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              )}
+              بحث
             </button>
           </div>
 
-          <nav
-            aria-label="نوع النتائج"
-            className="mt-6 flex gap-2 border-border border-b"
-          >
-            {[
-              { label: "الدروس الصوتية", value: "audio" },
-              { label: "المقالات", value: "articles" },
-            ].map((option) => (
-              <button
-                aria-pressed={scope === option.value}
-                className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-3 text-sm transition-colors ${
-                  scope === option.value
-                    ? "border-accent font-medium text-fg"
-                    : "border-transparent text-muted hover:text-fg"
-                }`}
-                key={option.value}
-                onClick={changeScope}
-                type="button"
-                value={option.value}
-              >
-                {option.label}
-                {scope === option.value && hits.length > 0 && (
-                  <span className="digits text-xs">{hits.length}</span>
-                )}
-              </button>
-            ))}
-          </nav>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <fieldset className="inline-flex rounded-full bg-surface-2 p-1">
+              <legend className="sr-only">مكان البحث</legend>
+              {SCOPES.map((option) => (
+                <button
+                  aria-pressed={scope === option.value}
+                  className={`min-h-9 rounded-full px-4 text-sm transition-colors ${
+                    scope === option.value
+                      ? "bg-surface font-medium text-fg shadow-sm"
+                      : "text-muted hover:text-fg"
+                  }`}
+                  key={option.value}
+                  onClick={changeScope}
+                  type="button"
+                  value={option.value}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </fieldset>
 
-          <details className="mt-3 text-sm">
-            <summary className="flex min-h-11 cursor-pointer items-center text-muted hover:text-fg">
-              خيارات البحث
-            </summary>
-            <div className="flex flex-wrap gap-x-6 gap-y-1 rounded-lg bg-surface-2 px-4 py-2">
-              <label className="flex min-h-11 items-center gap-2">
-                <input
-                  checked={mode === "phrase"}
-                  onChange={changeMode}
-                  type="checkbox"
-                />
-                مطابقة العبارة بالترتيب نفسه
-              </label>
-              <label className="flex min-h-11 items-center gap-2">
-                <input
-                  checked={occurrences}
-                  onChange={changeOccurrences}
-                  type="checkbox"
-                />
-                إظهار المواضع المتعددة من الدرس نفسه
-              </label>
-            </div>
-          </details>
+            <button
+              aria-pressed={exact}
+              className={chip(exact)}
+              onClick={toggleExact}
+              title="تظهر النتائج التي فيها كلماتك متتالية بالترتيب نفسه"
+              type="button"
+            >
+              {exact && <Check aria-hidden="true" className="size-3.5" />}
+              العبارة كما هي
+            </button>
+            {scope === "audio" && (
+              <button
+                aria-pressed={spread}
+                className={chip(spread)}
+                onClick={toggleSpread}
+                title="إظهار كل موضع ورد فيه البحث داخل الدرس الواحد"
+                type="button"
+              >
+                {spread && <Check aria-hidden="true" className="size-3.5" />}
+                كل المواضع في الدرس
+              </button>
+            )}
+          </div>
         </form>
       </search>
 
       <div
         aria-atomic="true"
         aria-live="polite"
-        className="mt-10 scroll-mt-20 outline-none"
+        className="mt-8 scroll-mt-20 outline-none"
         ref={results}
         tabIndex={-1}
       >
         {busy && <p className="text-muted text-sm">جارٍ البحث…</p>}
         {!busy && hits.length > 0 && (
           <p className="text-muted text-sm">
-            النتائج من <span className="digits">1</span> إلى{" "}
-            <span className="digits">{Math.min(visible, hits.length)}</span> من
-            أصل <span className="digits">{hits.length}</span>
+            <span className="digits font-medium text-fg">{hits.length}</span>{" "}
+            نتيجة عن «{asked}»
           </p>
         )}
         {!busy && message && (
