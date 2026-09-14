@@ -474,7 +474,7 @@ export default function Search({ endpoint }: { endpoint: string }) {
                     <Combobox.Positioner className="z-50" sideOffset={4}>
                       <Combobox.Popup
                         aria-label="السلسلة"
-                        className="min-w-(--anchor-width) max-w-(--available-width) overflow-hidden rounded-lg bg-surface text-fg shadow-md ring-1 ring-border"
+                        className="w-(--anchor-width) max-w-(--available-width) overflow-hidden rounded-lg bg-surface text-fg shadow-md ring-1 ring-border"
                       >
                         <Combobox.Input
                           className="h-11 w-full border-border border-b bg-transparent px-3 text-base outline-none placeholder:text-muted focus-visible:outline-none"
