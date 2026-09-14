@@ -206,6 +206,30 @@
   border-radius: 0.875rem;
 }
 
+@utility cue {
+  @apply flex scroll-mt-72 items-start gap-2 rounded-lg border-s-2 pe-1 ps-2 transition-colors lg:scroll-mt-28;
+}
+
+@utility cue-on {
+  @apply border-accent bg-accent-soft;
+}
+
+@utility cue-off {
+  @apply border-transparent hover:bg-surface-2;
+}
+
+@utility cue-ts {
+  @apply inline-flex min-h-11 shrink-0 items-center rounded-md px-1.5 text-xs text-muted transition-colors group-hover:text-accent;
+}
+
+@utility cue-txt {
+  @apply prose-read min-w-0 flex-1 py-2;
+}
+
+@utility cue-copy {
+  @apply mt-1 grid size-11 shrink-0 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:text-fg no-hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100;
+}
+
 /* انتقالُ التصفّح: يتكفّل به المتصفّحُ وحده — لا موجِّهَ ولا سكربت. */
 @view-transition {
   navigation: auto;

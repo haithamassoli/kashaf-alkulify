@@ -24,3 +24,6 @@ pnpm-debug.log*
 .idea/
 
 .env.local
+.search/
+.search-venv/
+__pycache__/

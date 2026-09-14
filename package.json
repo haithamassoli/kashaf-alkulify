@@ -10,7 +10,15 @@
     "format": "biome check --write",
     "lint": "biome check",
     "prepare": "lefthook install",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "search:check": ".search-venv/bin/python -m unittest discover -s scripts/search -p 'test_*.py'",
+    "search:embed": ".search-venv/bin/python scripts/search/cli.py embed",
+    "search:eval": ".search-venv/bin/python scripts/search/cli.py eval",
+    "search:export": ".search-venv/bin/python scripts/search/cli.py export",
+    "search:index": ".search-venv/bin/python scripts/search/cli.py index",
+    "search:prepare": ".search-venv/bin/python scripts/search/cli.py prepare",
+    "search:serve": ".search-venv/bin/python scripts/search/cli.py serve",
+    "search:verify": ".search-venv/bin/python scripts/search/cli.py verify"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.5",

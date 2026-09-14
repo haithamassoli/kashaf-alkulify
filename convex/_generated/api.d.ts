@@ -18,6 +18,7 @@ import type * as lib_normalize from "../lib/normalize.js";
 import type * as media from "../media.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
+import type * as search from "../search.js";
 import type * as seed from "../seed.js";
 
 import type {
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   media: typeof media;
   mutations: typeof mutations;
   queries: typeof queries;
+  search: typeof search;
   seed: typeof seed;
 }>;
 
