@@ -1,0 +1,21 @@
+---
+import { Playlists } from "../../islands/playlists";
+import Base from "../../layouts/Base.astro";
+import { breadcrumb, SHEIKH, SITE_URL } from "../../lib/seo";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@id": `${SITE_URL}/p/#collection`,
+  "@type": "CollectionPage",
+  inLanguage: "ar",
+  name: "القوائم",
+};
+---
+
+<Base
+  description={`قوائم وسلاسل دروس ${SHEIKH}.`}
+  schema={[schema, breadcrumb([["القوائم", "/p/"]])]}
+  title="القوائم"
+>
+  <Playlists client:only="react" />
+</Base>

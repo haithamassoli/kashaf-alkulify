@@ -154,6 +154,7 @@ const schema = defineSchema({
   })
     .index("by_lesson_key", ["lessonKey"])
     .index("by_review_status", ["reviewStatus"])
+    .index("by_series_name", ["seriesName"])
     // The review queue is served least-confident first (report §6).
     .index("by_review_status_and_confidence", [
       "reviewStatus",
