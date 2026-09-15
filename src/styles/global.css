@@ -237,19 +237,38 @@
   direction: ltr;
 }
 
-/* Phones have hardware volume keys; the seek bar needs the room more. */
-@media (width < 40rem) {
-  .player .vds-audio-layout .vds-volume {
-    display: none;
-  }
-}
-
 /* The seek bar stays put instead of collapsing whenever playback pauses. */
 .player .vds-audio-layout .vds-time-slider {
   visibility: visible;
   max-width: 100%;
   opacity: 1;
   transform: none;
+}
+
+/*
+  Keep the control row the same width paused or playing. Vidstack shows the
+  title only while paused and the ±10s buttons only while playing; the page
+  already shows the title, and a squeezed title flips its marquee on and off
+  every frame, which made the seek bar flicker.
+*/
+.player .vds-audio-layout .vds-title {
+  display: none;
+}
+
+.player .vds-audio-layout .vds-seek-button {
+  visibility: visible;
+  max-width: var(--audio-button-size, 36px);
+  transition: none;
+}
+
+/*
+  Phones have hardware volume keys and lock-screen seeking; the seek bar needs
+  the room more than the volume and ±10s buttons do.
+*/
+@media (width < 40rem) {
+  .player .vds-audio-layout :is(.vds-volume, .vds-seek-button) {
+    display: none;
+  }
 }
 
 /* Vidstack caps every button at 36px wide, which squashed the play button. */
