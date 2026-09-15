@@ -4,7 +4,8 @@ import { type SavedKind, savedItems, setSaved } from "../lib/saved";
 import { flash } from "../lib/toast";
 
 interface Props {
-  body: string;
+  /** The text to copy, or the id of the element holding it (keeps long text out of island props). */
+  body: string | { from: string };
   href: string;
   kind: SavedKind;
   title: string;
@@ -17,7 +18,11 @@ const ICON = "size-5";
 export const Actions = ({ body, href, kind, title }: Props): ReactNode => {
   const [saved, setSavedState] = useState(false);
   const absoluteUrl = () => new URL(href, window.location.origin).href;
-  const documentText = () => `${title}\n${absoluteUrl()}\n\n${body}\n`;
+  const text = () =>
+    typeof body === "string"
+      ? body
+      : (document.getElementById(body.from)?.textContent ?? "");
+  const documentText = () => `${title}\n${absoluteUrl()}\n\n${text()}\n`;
 
   useEffect(() => {
     setSavedState(Boolean(savedItems()[href]));

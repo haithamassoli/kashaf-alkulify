@@ -114,8 +114,6 @@ const jsonLd = (data: Record<string, unknown>) =>
       media="(prefers-color-scheme: dark)"
       name="theme-color"
     >
-    <!-- Holds first paint until the title handoff below has run (Chromium). -->
-    <link blocking="render" href="#vt-handoff" rel="expect">
     <link href="/favicon.png" rel="icon" type="image/png">
     <link href="/apple-touch-icon.png" rel="apple-touch-icon">
     <link href="/site.webmanifest" rel="manifest">
@@ -241,29 +239,6 @@ const jsonLd = (data: Record<string, unknown>) =>
       class:list={["mx-auto px-4 pb-24", wide ? "max-w-6xl" : "max-w-3xl"]}
     >
       <slot />
-      <!--
-        A client-rendered title isn't in the DOM when the browser captures the new
-        page, so an island fallback marked data-vt-fallback shows the title the
-        clicked link handed over at pageswap. Inline and parser-blocking on purpose.
-      -->
-      <script id="vt-handoff" is:inline>
-        try {
-          const seed = JSON.parse(sessionStorage.getItem("vt-title") ?? "null");
-          const fallback = document.querySelector("[data-vt-fallback]");
-          if (fallback && seed?.url === location.href) {
-            fallback.querySelector("h1").textContent = seed.title;
-            const query = fallback.querySelector("[data-vt-query]");
-            const asked = new URLSearchParams(location.search).get("q")?.trim();
-            if (query && asked) {
-              query.append(asked);
-              query.hidden = false;
-            }
-            fallback.hidden = false;
-          }
-        } catch {
-          // Storage is off; the page still loads, only without the title morph.
-        }
-      </script>
     </main>
 
     <footer class="border-t border-border">
@@ -332,6 +307,10 @@ const jsonLd = (data: Record<string, unknown>) =>
     </div>
 
     <script>
+      import { registerTools } from "../lib/webmcp";
+
+      registerTools();
+
       const toggle = document.getElementById("theme-toggle");
 
       if (toggle) {
@@ -380,24 +359,14 @@ const jsonLd = (data: Record<string, unknown>) =>
         });
       }
 
-      // يُسمّى عنوانُ الرابط المنقور وحدَه فيطير إلى عنوان الصفحة التالية، ويُسلَّم نصُّه لها.
+      // يُسمّى عنوانُ الرابط المنقور وحدَه فيطير إلى عنوان الصفحة التالية.
       addEventListener("pageswap", (event) => {
         const url = event.activation?.entry.url;
         for (const title of document.querySelectorAll<HTMLElement>(
           "[data-vt-title]"
         )) {
-          const clicked = title.closest("a")?.href === url;
-          title.style.viewTransitionName = clicked ? "page-title" : "none";
-          if (clicked) {
-            try {
-              sessionStorage.setItem(
-                "vt-title",
-                JSON.stringify({ title: title.textContent, url })
-              );
-            } catch {
-              // Storage is off; the title still morphs if the next page is quick.
-            }
-          }
+          title.style.viewTransitionName =
+            title.closest("a")?.href === url ? "page-title" : "none";
         }
       });
 

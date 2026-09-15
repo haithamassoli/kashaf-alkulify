@@ -17,19 +17,5 @@ const schema = {
   schema={[schema, breadcrumb([["القوائم", "/p/"]])]}
   title="القوائم"
 >
-  <Playlists client:only="react">
-    <div data-vt-fallback hidden slot="fallback">
-      <a
-        class="mt-8 inline-flex min-h-11 items-center text-muted underline underline-offset-4 hover:text-fg"
-        href="/p/"
-        >القوائم</a
-      >
-      <h1
-        class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl"
-        data-vt-title
-      >
-        القوائم
-      </h1>
-    </div>
-  </Playlists>
+  <Playlists client:only="react" />
 </Base>

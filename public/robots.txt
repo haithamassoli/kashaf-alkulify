@@ -3,3 +3,5 @@ Allow: /
 
 # The dashboard is for admins and carries a noindex meta tag as well.
 Disallow: /admin/
+
+Sitemap: https://alkulify.assoli.site/sitemap.xml

@@ -1,3 +1,5 @@
+import { articlePath, lessonPath } from "./paths";
+
 const KEY = "kashaf:saved";
 
 export type SavedKind = "a" | "v";
@@ -7,6 +9,20 @@ export interface SavedItem {
   kind: SavedKind;
   title: string;
 }
+
+/** Items saved before detail pages had their own paths (`/a/?id=…`). */
+const LEGACY = /^\/([av])\/\?id=([^&]+)/;
+
+const currentHref = (href: string): string => {
+  const [, kind, id] = LEGACY.exec(href) ?? [];
+
+  if (!(kind && id)) {
+    return href;
+  }
+  const path = decodeURIComponent(id);
+
+  return kind === "a" ? articlePath(path) : lessonPath(path);
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -26,10 +42,12 @@ export const savedItems = (): Record<string, SavedItem> => {
     }
 
     return Object.fromEntries(
-      Object.entries(parsed).filter(
-        (entry): entry is [string, SavedItem] =>
-          entry[0].startsWith("/") && isSavedItem(entry[1])
-      )
+      Object.entries(parsed)
+        .filter(
+          (entry): entry is [string, SavedItem] =>
+            entry[0].startsWith("/") && isSavedItem(entry[1])
+        )
+        .map(([href, item]) => [currentHref(href), item])
     );
   } catch {
     return {};

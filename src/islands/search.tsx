@@ -13,7 +13,9 @@ import {
 import { api } from "../../convex/_generated/api";
 import { normalize } from "../../convex/lib/normalize";
 import { convex } from "../lib/convex";
+import { timestamp } from "../lib/format";
 import { highlightWords } from "../lib/highlight";
+import { lessonPath } from "../lib/paths";
 
 interface Hit {
   charEnd: number;
@@ -55,19 +57,8 @@ const isResponse = (value: unknown): value is SearchResponse =>
   value.hits.every(isHit) &&
   Array.isArray(value.degraded);
 
-const timestamp = (milliseconds: number): string => {
-  const total = Math.max(0, Math.floor(milliseconds / 1000));
-  const seconds = String(total % 60).padStart(2, "0");
-  const minutes = Math.floor(total / 60) % 60;
-  const hours = Math.floor(total / 3600);
-
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`
-    : `${minutes}:${seconds}`;
-};
-
 const lessonHref = (hit: Hit, query: string): string => {
-  const params = new URLSearchParams({ id: hit.sourceId });
+  const params = new URLSearchParams();
 
   if (hit.startMs !== undefined) {
     params.set("t", String(Math.floor(hit.startMs / 1000)));
@@ -76,7 +67,9 @@ const lessonHref = (hit: Hit, query: string): string => {
     params.set("q", query);
   }
 
-  return `/v/?${params}`;
+  return params.size > 0
+    ? `${lessonPath(hit.sourceId)}?${params}`
+    : lessonPath(hit.sourceId);
 };
 
 const resultMessage = (result: SearchResponse): string => {

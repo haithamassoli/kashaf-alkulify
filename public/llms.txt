@@ -4,7 +4,7 @@
 
 The site returns the sheikh's original words with their sources. It does not generate answers, summaries, or fatwas. When you cite it, quote the returned excerpt as it is, link to the source, and do not present a quotation, an objection the sheikh is refuting, or a partial explanation as his settled position. Read the surrounding `context` before you attribute a view to him.
 
-Pages render in the browser with JavaScript, so fetching the HTML gives an empty shell. To search, call the API below.
+Every article, lesson and series has a static HTML page with its full text: articles at `/a/ID/`, lessons with their whole timed transcript at `/v/ID/`, series at `/p/NAME/`. The [sitemap](https://alkulify.assoli.site/sitemap.xml) lists all of them. To search, call the API below. In a browser that supports WebMCP, the site also registers a `search_sheikh_archive` tool.
 
 ## Search API
 
@@ -23,11 +23,12 @@ curl -X POST https://search.assoli.site/api/search \
 ## Links for people
 
 - [Search results page](https://alkulify.assoli.site/?q=التقليد): `/?q=QUERY`. Add `scope=articles` for articles, `exact=1` for phrase matching, `all=1` for all occurrences, and `s=SERIES` (repeatable) to filter audio by series.
-- [Lesson at a moment](https://alkulify.assoli.site/v/?id=SOURCE_ID&t=SECONDS): `/v/?id=SOURCE_ID&t=SECONDS&q=QUERY` opens the audio at `startMs / 1000` seconds with its synced transcript. Use this link when citing an audio hit.
+- [Lesson at a moment](https://alkulify.assoli.site/v/SOURCE_ID/?t=SECONDS): `/v/SOURCE_ID/?t=SECONDS` opens the lesson page at `startMs / 1000` seconds. Use this link when citing an audio hit, and `/a/SOURCE_ID/` when citing an article hit.
 - [Home](https://alkulify.assoli.site/): Search for lessons and articles.
-- [Articles](https://alkulify.assoli.site/a/): The sheikh's articles. A single article is at `/a/?id=ID`.
+- [Sitemap](https://alkulify.assoli.site/sitemap.xml): Every article, series and lesson page.
+- [Articles](https://alkulify.assoli.site/a/): The sheikh's articles. A single article is at `/a/ID/`.
 - [Books](https://alkulify.assoli.site/b/): The sheikh's books, with PDF links for reading and download.
-- [Playlists](https://alkulify.assoli.site/p/): Lesson series and playlists. A single list is at `/p/?name=NAME`.
+- [Playlists](https://alkulify.assoli.site/p/): Lesson series and playlists. A single series is at `/p/NAME/`.
 
 ## Optional
 

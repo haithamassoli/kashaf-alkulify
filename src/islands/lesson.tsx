@@ -7,7 +7,7 @@ import {
   DefaultAudioLayout,
   defaultLayoutIcons,
 } from "@vidstack/react/player/layouts/default";
-import { Check, ChevronLeft, ChevronRight, Copy, Loader2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import {
   type ChangeEvent,
   type MouseEvent,
@@ -18,8 +18,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { handedTitle } from "../lib/handed-title";
+import { timestamp } from "../lib/format";
 import { highlightWords, normalizeArabic } from "../lib/highlight";
+import { lessonPath } from "../lib/paths";
 import {
   PLAYER_SLOTS,
   PLAYER_SPEEDS,
@@ -82,17 +83,6 @@ const isLesson = (value: unknown): value is LessonData =>
   typeof value.url === "string" &&
   (value.url === "" || value.url.startsWith("https://"));
 
-const timestamp = (milliseconds: number): string => {
-  const total = Math.max(0, Math.floor(milliseconds / 1000));
-  const seconds = String(total % 60).padStart(2, "0");
-  const minutes = Math.floor(total / 60) % 60;
-  const hours = Math.floor(total / 3600);
-
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`
-    : `${minutes}:${seconds}`;
-};
-
 const partAt = (parts: Part[], milliseconds: number): number => {
   const found = parts.findIndex(
     (part) =>
@@ -110,7 +100,23 @@ const segmentAt = (segments: Segment[], milliseconds: number): number =>
 const ICON_BUTTON =
   "grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-fg disabled:pointer-events-none disabled:opacity-40";
 
-export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
+interface Props {
+  endpoint: string;
+  id: string;
+  title: string;
+  /**
+   * The page's static transcript. It stays readable while the player loads, and
+   * when it cannot; this island hides it only once the synced view replaces it.
+   */
+  transcriptId: string;
+}
+
+export default function Lesson({
+  endpoint,
+  id,
+  title,
+  transcriptId,
+}: Props): ReactNode {
   const colorScheme = usePlayerTheme();
   const player = useRef<MediaPlayerInstance>(null);
   const list = useRef<HTMLOListElement>(null);
@@ -125,26 +131,24 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
   const [arrivalQuery] = useState(
     () => new URLSearchParams(window.location.search).get("q")?.trim() ?? ""
   );
-  const [handed] = useState(handedTitle);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(-1);
   const deferredFilter = useDeferredValue(filter);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sourceId = params.get("id") ?? "";
-
-    if (!(endpoint && sourceId)) {
-      setError("تعذّر تحديد الدرس المطلوب.");
+    if (!endpoint) {
+      setError("تعذّر تشغيل الصوت الآن؛ التفريغ متاح أدناه.");
       return;
     }
 
     const controller = new AbortController();
-    const seconds = Number(params.get("t"));
+    const seconds = Number(
+      new URLSearchParams(window.location.search).get("t")
+    );
     const start = Number.isFinite(seconds) ? Math.max(0, seconds * 1000) : 0;
 
     fetch(`${endpoint}/lesson`, {
-      body: JSON.stringify({ sourceId }),
+      body: JSON.stringify({ sourceId: id }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
       signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]),
@@ -166,18 +170,15 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
         shouldPlay.current = target > 0;
         setPartIndex(partAt(found.parts, target));
         setLesson(found);
-        document.title = `${found.title} — كشّاف أبي جعفر`;
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setError(
-            "تعذّر تحميل الدرس أو تغيّر مصدره. أعد البحث ثم حاول مرة أخرى."
-          );
+          setError("تعذّر تشغيل الصوت الآن؛ التفريغ متاح أدناه.");
         }
       });
 
     return () => controller.abort();
-  }, [endpoint]);
+  }, [endpoint, id]);
 
   const setActiveAt = useCallback(
     (milliseconds: number) => {
@@ -224,10 +225,16 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
       return;
     }
 
+    const transcript = document.getElementById(transcriptId);
+
+    if (transcript) {
+      transcript.hidden = true;
+    }
+
     const frame = requestAnimationFrame(() => setActiveAt(arrivalTime.current));
 
     return () => cancelAnimationFrame(frame);
-  }, [lesson, setActiveAt]);
+  }, [lesson, setActiveAt, transcriptId]);
 
   const current = lesson?.parts[partIndex] ?? null;
 
@@ -348,19 +355,13 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
 
   if (error) {
     return (
-      <div className="card mt-10 p-6 text-center">
-        <p>{error}</p>
-        <a
-          className="mt-4 inline-flex min-h-11 items-center text-accent underline underline-offset-4"
-          href="/"
-        >
-          العودة إلى البحث
-        </a>
-      </div>
+      <p className="card mt-8 p-4 text-muted text-sm" role="status">
+        {error}
+      </p>
     );
   }
 
-  const header = (title: string) => (
+  const header = (
     <>
       <a
         className="inline-flex min-h-11 items-center text-muted text-sm hover:text-fg"
@@ -386,21 +387,7 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
   );
 
   if (!(lesson && current)) {
-    const loading = (
-      <p className="mt-16 flex items-center justify-center gap-2 text-muted">
-        <Loader2 aria-hidden="true" className="size-5 animate-spin" />
-        جارٍ تجهيز الدرس…
-      </p>
-    );
-
-    return handed === undefined ? (
-      loading
-    ) : (
-      <div className="pt-8">
-        {header(handed)}
-        {loading}
-      </div>
-    );
+    return null;
   }
 
   const normalizedFilter = normalizeArabic(deferredFilter);
@@ -413,7 +400,7 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
 
   return (
     <div className="pt-8 pb-36 lg:pb-0">
-      {header(lesson.title)}
+      {header}
       <p className="mt-1 flex flex-wrap items-center gap-x-4 text-muted text-sm">
         <span className="digits">{timestamp(lesson.durationMs)}</span>
         {lesson.url && (
@@ -432,7 +419,7 @@ export default function Lesson({ endpoint }: { endpoint: string }): ReactNode {
         body={lesson.segments
           .map((segment) => `[${timestamp(segment.startMs)}] ${segment.text}`)
           .join("\n")}
-        href={`/v/?id=${encodeURIComponent(lesson.sourceId)}`}
+        href={lessonPath(id)}
         kind="v"
         title={lesson.title}
       />

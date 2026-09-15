@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "destination": "/a/:id/",
+      "has": [{ "key": "id", "type": "query", "value": "(?<id>[^&]+)" }],
+      "source": "/a/"
+    },
+    {
+      "destination": "/v/:id/",
+      "has": [{ "key": "id", "type": "query", "value": "(?<id>[^&]+)" }],
+      "source": "/v/"
+    },
+    {
+      "destination": "/p/:name/",
+      "has": [{ "key": "name", "type": "query", "value": "(?<name>[^&]+)" }],
+      "source": "/p/"
+    }
+  ]
+}

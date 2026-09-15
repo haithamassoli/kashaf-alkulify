@@ -1,0 +1,108 @@
+---
+import "@vidstack/react/player/styles/default/theme.css";
+import "@vidstack/react/player/styles/default/layouts/audio.css";
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import Lesson from "../../islands/lesson";
+import Base from "../../layouts/Base.astro";
+import { lessons } from "../../lib/archive";
+import { duration, timestamp } from "../../lib/format";
+import { lessonPath, seriesPath } from "../../lib/paths";
+import { SEARCH_ENDPOINT } from "../../lib/search-api";
+import { breadcrumb, person, SHEIKH, SITE_URL } from "../../lib/seo";
+
+export const getStaticPaths = (async () =>
+  (await lessons()).map((row) => ({
+    params: { id: row.id },
+    props: { lesson: row },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { lesson } = Astro.props;
+const path = lessonPath(lesson.id);
+const title = lesson.title || "درس بلا عنوان";
+const seconds = Math.round(lesson.durationMs / 1000);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@id": `${SITE_URL}${path}#lesson`,
+  "@type": "AudioObject",
+  author: person,
+  duration: `PT${Math.floor(seconds / 60)}M${seconds % 60}S`,
+  inLanguage: "ar",
+  name: title,
+  ...(lesson.series && {
+    isPartOf: {
+      "@type": "CreativeWorkSeries",
+      name: lesson.series,
+      url: `${SITE_URL}${seriesPath(lesson.series)}`,
+    },
+  }),
+};
+const trail: [string, string][] = lesson.series
+  ? [
+      ["القوائم", "/p/"],
+      [lesson.series, seriesPath(lesson.series)],
+      [title, path],
+    ]
+  : [[title, path]];
+---
+
+<Base
+  description={`${title} — درس صوتي لـ${SHEIKH} مع تفريغه النصي.`}
+  schema={[schema, breadcrumb(trail)]}
+  title={title}
+  wide
+>
+  <Lesson
+    endpoint={SEARCH_ENDPOINT}
+    id={lesson.id}
+    title={title}
+    transcriptId="lesson-transcript"
+    client:only="react"
+  />
+  <!--
+    What crawlers and no-script readers get: the whole transcript, each cue
+    linking to its moment. The island hides it once the synced player is ready.
+  -->
+  <article class="pt-8" id="lesson-transcript">
+    <a
+      class="inline-flex min-h-11 items-center text-sm text-muted hover:text-fg"
+      href="/"
+      >البحث في الدروس</a
+    >
+    <h1
+      class="mt-3 text-2xl font-semibold leading-relaxed tracking-tight"
+      data-vt-title
+    >
+      {title}
+    </h1>
+    <p class="mt-1 flex flex-wrap items-center gap-x-4 text-sm text-muted">
+      <span>{duration(lesson.durationMs)}</span>
+      {lesson.series && (
+          <a
+            class="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
+            href={seriesPath(lesson.series)}
+          >
+            {lesson.series}
+            {lesson.episode !== null && ` — ${lesson.episode}`}
+          </a>
+        )}
+    </p>
+    <p class="mt-4 text-sm text-muted">
+      تفريغ آلي للدرس الصوتي وقد يحتوي أخطاء؛ الأصل هو التسجيل.
+    </p>
+    <ol class="mt-6 space-y-3 leading-8">
+      {lesson.cues.map((cue) => (
+            <li>
+              <a
+                class="digits me-2 text-muted text-sm"
+                href={`?t=${Math.floor(cue.startMs / 1000)}`}
+                >{timestamp(cue.startMs)}</a
+              >
+              {cue.text}
+            </li>
+          ))}
+    </ol>
+  </article>
+</Base>

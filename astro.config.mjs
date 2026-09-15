@@ -2,11 +2,27 @@
 
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
+
+const secret = envField.string({
+  access: "secret",
+  context: "server",
+  optional: true,
+});
 
 // https://astro.build/config
 export default defineConfig({
   compressHTML: true,
+  // Read at build time only: lesson pages pull their transcripts from R2.
+  env: {
+    schema: {
+      R2_ACCESS_KEY_ID: secret,
+      R2_ARCHIVE_BUCKET: secret,
+      R2_ENDPOINT: secret,
+      R2_SECRET_ACCESS_KEY: secret,
+      VERCEL_ENV: secret,
+    },
+  },
   fonts: [
     {
       cssVariable: "--font-thmanyah-sans",

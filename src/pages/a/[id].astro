@@ -1,0 +1,80 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { Actions } from "../../islands/actions";
+import Base from "../../layouts/Base.astro";
+import { articles } from "../../lib/archive";
+import { arabicDay } from "../../lib/format";
+import { articlePath } from "../../lib/paths";
+import { breadcrumb, person, SITE_URL } from "../../lib/seo";
+
+export const getStaticPaths = (async () =>
+  (await articles()).map((row) => ({
+    params: { id: row.id },
+    props: { article: row },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { article } = Astro.props;
+const path = articlePath(article.id);
+const published = new Date(article.date).toISOString();
+
+const schema = {
+  "@context": "https://schema.org",
+  "@id": `${SITE_URL}${path}#article`,
+  "@type": "Article",
+  author: person,
+  datePublished: published,
+  headline: article.title.slice(0, 110),
+  inLanguage: "ar",
+  isBasedOn: article.telegramUrl,
+  mainEntityOfPage: `${SITE_URL}${path}`,
+};
+---
+
+<Base
+  description={article.text.replaceAll(/\s+/g, " ").slice(0, 160)}
+  schema={[schema, breadcrumb([["المقالات", "/a/"], [article.title, path]])]}
+  title={article.title}
+  type="article"
+>
+  <article class="pt-8">
+    <a
+      class="inline-flex min-h-11 items-center text-muted underline underline-offset-4 hover:text-fg"
+      href="/a/"
+      >المقالات</a
+    >
+    <span
+      class="mt-3 block w-fit rounded-full bg-surface-2 px-3 py-1 text-xs text-muted"
+      >مقالة</span
+    >
+    <h1
+      class="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl"
+      data-vt-title
+    >
+      {article.title}
+    </h1>
+    <div class="mt-1 flex flex-wrap items-center gap-x-5 text-sm text-muted">
+      <time datetime={published}><bdi>{arabicDay(article.date)}</bdi></time>
+      <a
+        class="inline-flex min-h-11 items-center text-accent underline underline-offset-4"
+        href={article.telegramUrl}
+        rel="noopener"
+        target="_blank"
+        >المصدر</a
+      >
+    </div>
+    <Actions
+      body={{ from: "article-text" }}
+      href={path}
+      kind="a"
+      title={article.title}
+      client:idle
+    />
+    <div
+      class="prose-read mt-6 max-w-none whitespace-pre-wrap text-fg"
+      id="article-text"
+      set:text={article.text}
+    ></div>
+  </article>
+</Base>

@@ -1,0 +1,85 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import Base from "../../layouts/Base.astro";
+import { series } from "../../lib/archive";
+import { duration } from "../../lib/format";
+import { lessonPath, seriesPath } from "../../lib/paths";
+import { breadcrumb, SHEIKH, SITE_URL } from "../../lib/seo";
+
+export const getStaticPaths = (async () =>
+  (await series()).map((found) => ({
+    params: { slug: found.slug },
+    props: { row: found },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { row } = Astro.props;
+const path = seriesPath(row.name);
+const number = (value: number) => value.toLocaleString("en-US");
+
+const schema = {
+  "@context": "https://schema.org",
+  "@id": `${SITE_URL}${path}#collection`,
+  "@type": "CollectionPage",
+  inLanguage: "ar",
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: row.lessons.map((lesson, index) => ({
+      "@type": "ListItem",
+      name: lesson.title,
+      position: index + 1,
+      url: `${SITE_URL}${lessonPath(lesson.id)}`,
+    })),
+    numberOfItems: row.lessons.length,
+  },
+  name: row.name,
+};
+---
+
+<Base
+  description={`سلسلة «${row.name}» من دروس ${SHEIKH}: ${number(row.lessons.length)} درس، ${duration(row.durationMs)}.`}
+  schema={[schema, breadcrumb([["القوائم", "/p/"], [row.name, path]])]}
+  title={row.name}
+>
+  <a
+    class="mt-8 inline-flex min-h-11 items-center text-muted underline underline-offset-4 hover:text-fg"
+    href="/p/"
+    >القوائم</a
+  >
+  <h1
+    class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl"
+    data-vt-title
+  >
+    {row.name}
+  </h1>
+  <p class="mt-2 text-sm text-muted">
+    <span class="digits">{number(row.lessons.length)}</span>
+    درس ·
+    {duration(row.durationMs)}
+  </p>
+  <ol class="mt-6 space-y-2">
+    {row.lessons.map((lesson) => (
+        <li>
+          <a
+            class="card flex items-start gap-3 px-4 py-3 transition-colors hover:bg-surface-2"
+            href={lessonPath(lesson.id)}
+          >
+            {lesson.episode !== null && (
+              <span class="digits mt-0.5 shrink-0 rounded-md bg-surface-2 px-2 py-1 text-muted text-xs">
+                {number(lesson.episode)}
+              </span>
+            )}
+            <span class="min-w-0 flex-1">
+              <span class="block font-medium leading-relaxed" data-vt-title>
+                {lesson.title || "درس بلا عنوان"}
+              </span>
+              <span class="mt-1 block text-muted text-sm">
+                {duration(lesson.durationMs)}
+              </span>
+            </span>
+          </a>
+        </li>
+      ))}
+  </ol>
+</Base>
