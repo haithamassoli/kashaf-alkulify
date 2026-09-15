@@ -83,6 +83,14 @@ class SearchContracts(unittest.TestCase):
         partial = {**hit, "charStart": 3}
         self.assertEqual(metrics([partial], [partial], gold)["success3"], 0)
 
+    def test_compare_scores_first_useful_hit_against_pooled_ideal(self):
+        from compare import case_scores
+        score = case_scores([0, None, 2, 1], [2, 2, 1, 0])
+        self.assertEqual((score["s1"], score["s3"], score["mrr"], score["unjudged"]), (0, 1, 1 / 3, 1))
+        self.assertLess(score["ndcg"], 1)
+        self.assertEqual(case_scores([2, 2], [2, 2])["ndcg"], 1)
+        self.assertEqual(case_scores([], [2])["s5"], 0)
+
     def test_transcript_identity_and_time_units(self):
         source = {"scope": "audio", "sourceId": "a", "assemblyHash": "hash", "durationMs": 90000,
                   "parts": [{"sha256": "first", "order": 0, "offsetMs": 0, "durationMs": 60000},

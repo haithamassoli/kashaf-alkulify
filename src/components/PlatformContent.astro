@@ -14,7 +14,7 @@ const cards = [
     href: "/p/",
     icon: ["M4 7h12M4 12h12M4 17h7", "m17 13 4 2.5-4 2.5Z"],
     label: "السلاسل",
-    value: num(292),
+    value: num(288),
   },
   {
     icon: ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18", "M12 7.5V12l3 2"],
@@ -27,7 +27,7 @@ const cards = [
       "M8 9h8M8 13h5",
     ],
     label: "مقاطع التفريغ",
-    value: num(379_112),
+    value: num(299_063),
   },
   {
     href: "/a/",
@@ -46,7 +46,7 @@ const cards = [
       "M8 3v4M16 3v4M4 11h16",
     ],
     label: "آخر إضافة",
-    value: arabicDate("2026-09-10"),
+    value: arabicDate("2026-09-03"),
   },
 ];
 
@@ -103,7 +103,7 @@ if (cumulative.at(-1)?.hours !== 2300 || series.length !== 8) {
     <section class="card p-4">
       <h3 class="font-semibold text-base">أكبر السلاسل تفريغًا</h3>
       <p class="mt-1 text-muted text-sm">
-        أطول {series.length} سلاسل بالساعات المفرَّغة من أصل 292
+        أطول {series.length} سلاسل بالساعات المفرَّغة من أصل 288
       </p>
       <div class="relative mt-4 h-56">
         <canvas aria-label={barsAlt} id="chart-series" role="img"></canvas>

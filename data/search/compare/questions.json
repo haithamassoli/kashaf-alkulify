@@ -1,0 +1,1150 @@
+{
+  "version": 1,
+  "judging": "agent",
+  "cases": [
+    {
+      "id": "q001",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما حكم الاحتفال بالمولد النبوي",
+      "note": "known-zero baseline. `المولد النبوي` alone returns 527 cues, so the topic is in the corpus; the question form kills it. "
+    },
+    {
+      "id": "q002",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل يجوز الاستماع للأغاني",
+      "note": "known-zero baseline. `الغناء` alone returns 537 cues."
+    },
+    {
+      "id": "q003",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "حكم لبس الذهب للرجال",
+      "note": "known-zero baseline. عمدة الفقه [15] reads the متن on it: «الذهب والحرير مباح للنساء ... هذان حرام على ذكور أمتي»."
+    },
+    {
+      "id": "q004",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما الفرق بين الفرض والسنة",
+      "note": "known-zero baseline. أصول الفقه bread and butter (مختصر التحرير الأحكام التكليفية) but no phrasing of it survives `all`."
+    },
+    {
+      "id": "q005",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "كيف أصلي صلاة الاستخارة",
+      "note": "known-zero baseline. `الاستخارة` alone returns 71 cues, spread thin — no single lesson owns it, so no expectVideo."
+    },
+    {
+      "id": "q006",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل يجوز الدعاء بعد الصلاة جماعة",
+      "note": "known-zero baseline. `الدعاء الجماعي بعد الصلاة` returns 19, all one-offs."
+    },
+    {
+      "id": "q007",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "حكم التصوير الفوتوغرافي",
+      "note": "known-zero baseline. `التصوير` returns 1648 but nearly all of it is التصوير in the Quranic/creation sense, not photograp"
+    },
+    {
+      "id": "q008",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل تجب الزكاة في الراتب",
+      "note": "known-zero baseline. Covered as المال المستفاد in زاد المسافر كتاب الزكاة, but never in these words."
+    },
+    {
+      "id": "q009",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "حكم قراءة الفاتحة خلف الإمام",
+      "note": "known-zero baseline AND the third of the collapse triple. كتاب السنة لعبد الله بن أحمد [27] answers this exact question "
+    },
+    {
+      "id": "q010",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل يجوز السفر بلا محرم",
+      "note": "known-zero baseline. `سفر المرأة بغير محرم` returns 3."
+    },
+    {
+      "id": "q011",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "الفاتحة خلف الإمام",
+      "note": "collapse triple, 1 of 3: 41 hits today."
+    },
+    {
+      "id": "q012",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "قراءة الفاتحة خلف الإمام",
+      "note": "collapse triple, 2 of 3: 27 hits today. One more word and it is 0."
+    },
+    {
+      "id": "q013",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "مسجد",
+      "note": "morphology probe: singular. Currently an unrelated token to مساجد (3445 vs 1671)."
+    },
+    {
+      "id": "q014",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "مساجد",
+      "note": "morphology probe: plural of the above."
+    },
+    {
+      "id": "q015",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "صام",
+      "note": "morphology probe: past verb. 345 vs الصيام 1728 vs صائم 1643 — three unrelated tokens for one root."
+    },
+    {
+      "id": "q016",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "الصيام",
+      "note": "morphology probe: masdar."
+    },
+    {
+      "id": "q017",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "صائم",
+      "note": "morphology probe: active participle."
+    },
+    {
+      "id": "q018",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-tuning",
+      "query": "قزحبرم فطسلخ ضويعن",
+      "note": "not words. Anything above 0 here means typo tolerance or a fallback went feral."
+    },
+    {
+      "id": "q019",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-tuning",
+      "query": "تربية أسماك الزينة في الحوض",
+      "note": "real Arabic, genuinely outside a فقه/أصول/عقيدة corpus."
+    },
+    {
+      "id": "q020",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-tuning",
+      "query": "برمجة تطبيقات الجوال بلغة بايثون",
+      "note": "real Arabic, outside the corpus."
+    },
+    {
+      "id": "q021",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-tuning",
+      "query": "قواعد كرة القدم وعدد اللاعبين",
+      "note": "real Arabic, outside the corpus."
+    },
+    {
+      "id": "q022",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما حكم المسح على الخفين وكم مدته",
+      "note": "المغني لابن قدامة - الطهارة - (17) carries 26 of the top 200 hits for `المسح على الخفين`, more than any other lesson."
+    },
+    {
+      "id": "q023",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "متى يجوز التيمم بدلا من الوضوء",
+      "note": "المغني - الطهارة - (15), 35 of the top 200 hits for `التيمم`."
+    },
+    {
+      "id": "q024",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "كيف تصلى صلاة الجنازة",
+      "note": "زاد المسافر [19] كتاب الجنائز — title names the باب, 15 of the top 200 hits for `صلاة الجنازة`."
+    },
+    {
+      "id": "q025",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "على من تجب زكاة الفطر ومتى تخرج",
+      "note": "زاد المسافر [27] «تابع كتاب الخراج وزكاة الفطر» — title names it, 12 of the top hits."
+    },
+    {
+      "id": "q026",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل يشترط الصوم في الاعتكاف",
+      "note": "زاد المسافر [22] «الصيام والاعتكاف وبداية الزكاة», 18 of the top hits for `الاعتكاف`."
+    },
+    {
+      "id": "q027",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما شروط الأضحية وما السن المجزئة فيها",
+      "note": "مسند الدارمي (191) كتاب الأضاحي — title names the كتاب, 14 of the top hits."
+    },
+    {
+      "id": "q028",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "مواقيت الإحرام",
+      "note": "عمدة الفقه [43], 9 of the top hits for `المواقيت` and the only lesson that recites the مواقيت verse."
+    },
+    {
+      "id": "q029",
+      "scope": "audio",
+      "category": "quote",
+      "origin": "legacy-tuning",
+      "query": "عرق العراق يلملم اليمني",
+      "note": "verbatim: the مواقيت verse, spoken only in عمدة الفقه [43]. A recall test — if this misses, verbatim phrase search is br"
+    },
+    {
+      "id": "q030",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما حكم الخلع وهل هو فسخ أم طلاق",
+      "note": "شرح عمدة الفقه (115) باب الخُلع — 20 of the top hits, and the cue at 70s opens the باب."
+    },
+    {
+      "id": "q031",
+      "scope": "audio",
+      "category": "quote",
+      "origin": "legacy-tuning",
+      "query": "أحق الناس بالطفل أمه",
+      "note": "verbatim: the opening line of شرح عمدة الفقه (130) باب الحضانة. Exactly one cue in the corpus."
+    },
+    {
+      "id": "q032",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "كم عدة المرأة المتوفى عنها زوجها",
+      "note": "شرح عمدة الفقه (123) باب العدّة."
+    },
+    {
+      "id": "q033",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل للصداق حد أعلى",
+      "note": "شرح عمدة الفقه (108) كتاب الصداق — top lesson for `الصداق`."
+    },
+    {
+      "id": "q034",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "كم رضعة يثبت بها التحريم",
+      "note": "شرح عمدة الفقه (100) كتاب الرضاع — top عمدة lesson for `الرضاع`."
+    },
+    {
+      "id": "q035",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما كفارة اليمين إذا حنث الإنسان",
+      "note": "شرح عمدة الفقه (143) [كفارة اليمين] — the title is the topic verbatim, though the neighbouring كتاب الأيمان lesson curre"
+    },
+    {
+      "id": "q036",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما حكم النذر وهل يلزم الوفاء به",
+      "note": "شرح عمدة الفقه (140) باب النذر — 13 of the top hits for `النذر`."
+    },
+    {
+      "id": "q037",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما شروط القسامة في الدماء",
+      "note": "شرح عمدة الفقه (156) [القسامة] — 10 of the top hits, cue at 1s opens the باب."
+    },
+    {
+      "id": "q038",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "كم نصاب السرقة الذي تقطع فيه اليد",
+      "note": "شرح عمدة الفقه (161) «التعزير وحد السرقة»."
+    },
+    {
+      "id": "q039",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "على من تجب الجزية",
+      "note": "شرح عمدة الفقه (168) [فصل - الجزية]. زاد المسافر's الخراج lesson currently outranks it."
+    },
+    {
+      "id": "q040",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "ما شروط الوقف الصحيح",
+      "note": "شرح عمدة الفقه (66) كتاب الوقف — 12 of the top hits for `الوقف`."
+    },
+    {
+      "id": "q041",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل تصح الوكالة في البيع والشراء",
+      "note": "شرح عمدة الفقه (58) باب الوكالة — top lesson for `الوكالة`."
+    },
+    {
+      "id": "q042",
+      "scope": "audio",
+      "category": "quote",
+      "origin": "legacy-tuning",
+      "query": "لا يجب الحد إلا على مكلف عالم بالتحريم",
+      "note": "verbatim: the opening متن line of شرح عمدة الفقه (157) كتاب الحدود."
+    },
+    {
+      "id": "q043",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "بيع الغرر",
+      "note": "bare topic. 17 cues, concentrated in عمدة الفقه البيوع (50-54) — spread over four lessons, so no honest single answer."
+    },
+    {
+      "id": "q044",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "الربا في الذهب والفضة",
+      "note": "bare topic. `الربا` returns 872; the علة discussion sits in عمدة الفقه [52]-[53] but spans both."
+    },
+    {
+      "id": "q045",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "الإجماع السكوتي",
+      "note": "bare topic from أصول الفقه. 38 cues, split between مختصر التحرير [43] and [88] — genuinely two lessons, so no expectVide"
+    },
+    {
+      "id": "q046",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل يحتج بخبر الآحاد في العقيدة",
+      "note": "أصول/عقيدة crossover he returns to often (مختصر التحرير 46-47, الحموية, الجامع). Too spread to name one lesson."
+    },
+    {
+      "id": "q047",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "الفرق بين المصلحة المرسلة والبدعة",
+      "note": "شرح مختصر التحرير (76) — 10 of the top hits for `المصلحة المرسلة`."
+    },
+    {
+      "id": "q048",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "الصفات الاختيارية",
+      "note": "«قراءة وتعليق على رسالة شيخ الإسلام ابن تيمية في الصفات الاختيارية (1)» — 13 of the top hits, title is the topic."
+    },
+    {
+      "id": "q049",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-tuning",
+      "query": "هل يجوز عمل المرأة خارج البيت",
+      "note": "«مصارحة أخوية حول موضوع عمل المرأة» — a whole lesson on exactly this, 12 of the top hits."
+    },
+    {
+      "id": "q050",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "legacy-tuning",
+      "query": "النسوية الإسلامية",
+      "note": "الأنثى وأحوالها بين الوحي والإنسان [6] — the cue at 3110s defines النسوية الإسلامية; 10 of the top hits."
+    },
+    {
+      "id": "q051",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "هل يجوز استقبال القبلة عند قضاء الحاجة",
+      "note": "باب النهي عن استقبال القبلة لغائط"
+    },
+    {
+      "id": "q052",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم البول واقفا",
+      "note": "باب في البول قائما"
+    },
+    {
+      "id": "q053",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم رهن المال مقابل الدين",
+      "note": "باب الرهن يقول المصنف"
+    },
+    {
+      "id": "q054",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم مواصلة الصيام يومين بلا فطر",
+      "note": "باب النهي عن الوصال"
+    },
+    {
+      "id": "q055",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "هل تدخل المرأة الحائض المسجد",
+      "note": "باب دخول حائض المسجد"
+    },
+    {
+      "id": "q056",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما الفرق بين الحوالة والضمان",
+      "note": "باب الحوالة"
+    },
+    {
+      "id": "q057",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "إذا اشترطت الزوجة شرطا في عقد الزواج هل يلزم الوفاء به",
+      "note": "الشروط في النكاح"
+    },
+    {
+      "id": "q058",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما تعريف النسخ عند الأصوليين",
+      "note": "باب في النسخ النسخ لغه وشرعا"
+    },
+    {
+      "id": "q059",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "هل يصح السجود على طرف الثوب اتقاء الحر",
+      "note": "باب الرخصه في السجود على الثوب"
+    },
+    {
+      "id": "q060",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "كم مقدار زكاة الزرع الذي يسقى بماء المطر",
+      "note": "باب العشر فيما سقت السماء"
+    },
+    {
+      "id": "q061",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "هل تصح الأحاديث الواردة في فضل سورة يس",
+      "note": "باب ما في فضل ياسين"
+    },
+    {
+      "id": "q062",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم لبس الحرير في الحرب",
+      "note": "باب القول في لبس الحرير والسلاح"
+    },
+    {
+      "id": "q063",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم بيع العينة",
+      "note": "باب العينة"
+    },
+    {
+      "id": "q064",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "هل يثبت لله عز وجل المجيء والإتيان يوم القيامة",
+      "note": "باب اتيان الله عز وجل"
+    },
+    {
+      "id": "q065",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم قيام رمضان وكم يصلي الناس",
+      "note": "باب قيام رمضان"
+    },
+    {
+      "id": "q066",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "كيف سد النبي صلى الله عليه وسلم الطرق الموصلة إلى الشرك",
+      "note": "باب ما جاء في حماية المصطفى"
+    },
+    {
+      "id": "q067",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما الشفاعة التي أثبتها الله والتي نفاها",
+      "note": "باب الشفاعة وقول الله"
+    },
+    {
+      "id": "q068",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "إذا وجد أحد الزوجين عيبا في الآخر هل يفسخ النكاح",
+      "note": "باب عيوب النكاح"
+    },
+    {
+      "id": "q069",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "أي ساعات الليل أفضل لصلاة التهجد",
+      "note": "باب اي الليل افضل"
+    },
+    {
+      "id": "q070",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما موقف السلف من الأخذ بالرأي في مسائل الدين",
+      "note": "باب في كراهيه اخذ الراي"
+    },
+    {
+      "id": "q071",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم الاحتكار في بلاد الثغور",
+      "note": "باب القول في حكره الطعام بالثغور"
+    },
+    {
+      "id": "q072",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "هل في مال الركاز زكاة وكم مقدارها",
+      "note": "باب الركاس"
+    },
+    {
+      "id": "q073",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما حكم الاستنجاء بالعظم والروث",
+      "note": "باب النهي عن الاستنجاء بعظم"
+    },
+    {
+      "id": "q074",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "من الذي تحل له الصدقة من الناس",
+      "note": "باب من تحل له الصدقه"
+    },
+    {
+      "id": "q075",
+      "scope": "audio",
+      "category": "question",
+      "origin": "legacy-heldout",
+      "query": "ما فضل قراءة آخر آيتين من سورة البقرة",
+      "note": "باب ما جاء في اخر سوره البقره"
+    },
+    {
+      "id": "q076",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-heldout",
+      "query": "ما حكم قيادة المركبات الفضائية إلى المريخ"
+    },
+    {
+      "id": "q077",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-heldout",
+      "query": "أفضل وصفة لتحضير الكيك بالشوكولاتة"
+    },
+    {
+      "id": "q078",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-heldout",
+      "query": "زقنبوت فرقعيش طنبورة"
+    },
+    {
+      "id": "q079",
+      "scope": "audio",
+      "category": "none",
+      "origin": "legacy-heldout",
+      "query": "كيف أبرمج تطبيقا بلغة بايثون"
+    },
+    {
+      "id": "q080",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "ما صحة قصة الناقة التي انشقت عنها الصخرة",
+      "note": "خروج ناقة صالح من الصخرة"
+    },
+    {
+      "id": "q081",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "شبهات المعاصرين حول الزواج بأكثر من امرأة",
+      "note": "مفاهيم مغلوطة حول تعدد الزوجات"
+    },
+    {
+      "id": "q082",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "هل للحسين بن علي ابنة اسمها رقية",
+      "note": "أسطورة رقية بنت الحسين"
+    },
+    {
+      "id": "q083",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "ما أصح صيغة التكبير أيام العيد",
+      "note": "أصح صيغ التكبير في العيدين عن الصحابة"
+    },
+    {
+      "id": "q084",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "هل يسعى المتمتع سعيا واحدا أم سعيين",
+      "note": "اختيار شيخ الإسلام أن المتمتع عليه سعي واحد"
+    },
+    {
+      "id": "q085",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "من نسي صلاة وهو مقيم ثم تذكرها وهو مسافر كيف يقضيها",
+      "note": "باب من نسي صلاة في الحضر ثم ذكرها في السفر"
+    },
+    {
+      "id": "q086",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "ما هو اسم الله الأعظم الذي إذا دعي به أجاب",
+      "note": "بحث في الأحاديث والآثار التي وردت في ( اسم الله الأعظم )"
+    },
+    {
+      "id": "q087",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "هل طه من الحروف المقطعة في أوائل السور",
+      "note": "هل صح عن أحد من السلف أنه قال طه من الحروف المقطعة في أوائل السور"
+    },
+    {
+      "id": "q088",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "ما صحة ما يروى أن الحسن البصري أهدى طبقا لمن اغتابه",
+      "note": "هل صح عن الحسن البصري أنه أهدى رطباً لمن اغتابه ؟"
+    },
+    {
+      "id": "q089",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "هل معنى سبحان الله هو التنزيه فقط",
+      "note": "التنبيه على قولهم ( التسبيح تنزيه )"
+    },
+    {
+      "id": "q090",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "هل ثبت أن ابن أبي ذئب كان يؤوي القدرية",
+      "note": "هل كان ابن أبي ذئب يؤوي القدرية ؟"
+    },
+    {
+      "id": "q091",
+      "scope": "articles",
+      "category": "question",
+      "origin": "legacy-articles",
+      "query": "ما حكم من مات ولم يهاجر هل يحبط عمله",
+      "note": "تعقيب على أبي طلحة البرهومي في مسألة حبوط العمل بعدم الهجرة"
+    },
+    {
+      "id": "q092",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "من صنف من المحدثين في إباحة الرقص والسماع ومن رد عليه"
+    },
+    {
+      "id": "q093",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل يجوز بيع السيف المحلى بالذهب أو الفضة بجنسه"
+    },
+    {
+      "id": "q094",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل يؤذن لصلاة الكسوف وهل يجهر فيها بالقراءة"
+    },
+    {
+      "id": "q095",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "ما موقف المسلم من القتال في الفتن والحروب الأهلية بين المسلمين"
+    },
+    {
+      "id": "q096",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "من هو المشبه الذي ذمه الإمام أحمد"
+    },
+    {
+      "id": "q097",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل سهم ذوي القربى في الخمس خاص بفقراء بني هاشم"
+    },
+    {
+      "id": "q098",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "منزلة ابن إسحاق في السيرة مقارنة بالأئمة المجتهدين"
+    },
+    {
+      "id": "q099",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل كان البخاري يرى أن القدرية مشركون"
+    },
+    {
+      "id": "q100",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "ما شروط الخلطة في زكاة الماشية"
+    },
+    {
+      "id": "q101",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل كفر منكري العلو أعظم من كفر عباد الأوثان"
+    },
+    {
+      "id": "q102",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل يجب الغسل بمجرد التقاء الختانين دون إنزال"
+    },
+    {
+      "id": "q103",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "الشكوى من الهرم وأرذل العمر"
+    },
+    {
+      "id": "q104",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل يمشي المشيعون أمام الجنازة"
+    },
+    {
+      "id": "q105",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "من يترك الدين بسبب التعلق بالحقوق"
+    },
+    {
+      "id": "q106",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "لماذا لا تكفر طالبان حكام الأنظمة"
+    },
+    {
+      "id": "q107",
+      "scope": "audio",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "تربية الأبناء استثمار للوالدين بعد موتهما"
+    },
+    {
+      "id": "q108",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "أثر منع الكحول في مدينة ألمانية"
+    },
+    {
+      "id": "q109",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "اعتراف ابن المنير بالخلاف بين متقدمي الأشاعرة ومتأخريهم في صفة اليدين"
+    },
+    {
+      "id": "q110",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "ما قاله شنودة عن الخلاف بين إبراهيم ولوط"
+    },
+    {
+      "id": "q111",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل يستسقي المسافر عند الشافعية"
+    },
+    {
+      "id": "q112",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "الإمام أحمد يشبه الجهمية بالزنادقة"
+    },
+    {
+      "id": "q113",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "ما أول خلع وقع في الإسلام"
+    },
+    {
+      "id": "q114",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "علاقة إباحة الإجهاض بانخفاض الجريمة"
+    },
+    {
+      "id": "q115",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "موقف الإمام أحمد من القصاص والوعاظ"
+    },
+    {
+      "id": "q116",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "أين ذكرت الصلوات الخمس في القرآن عند ابن عباس"
+    },
+    {
+      "id": "q117",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "هل كتاب مولد العروس لابن الجوزي"
+    },
+    {
+      "id": "q118",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "لماذا يذم الكبر في الفقير أكثر من الغني"
+    },
+    {
+      "id": "q119",
+      "scope": "articles",
+      "category": "question",
+      "origin": "new-corpus",
+      "query": "عقوبة من يعارض الشذوذ في الغرب"
+    },
+    {
+      "id": "q120",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "robustness",
+      "query": "الربا"
+    },
+    {
+      "id": "q121",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "robustness",
+      "query": "التوحيد"
+    },
+    {
+      "id": "q122",
+      "scope": "audio",
+      "category": "topic",
+      "origin": "robustness",
+      "query": "صلاة الجماعة"
+    },
+    {
+      "id": "q123",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "حكم الاستماع للأغاني"
+    },
+    {
+      "id": "q124",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "زكاة الذهب الملبوس"
+    },
+    {
+      "id": "q125",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "هل يجوز الجمع بين الصلاتين بسبب المطر"
+    },
+    {
+      "id": "q126",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "حكم التأمين التجاري"
+    },
+    {
+      "id": "q127",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "حكم حلق اللحية"
+    },
+    {
+      "id": "q128",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "ما حكم تارك الصلاة"
+    },
+    {
+      "id": "q129",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "هل تجب طاعة الوالدين في الطلاق"
+    },
+    {
+      "id": "q130",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "متى يبدأ وقت صلاة الضحى"
+    },
+    {
+      "id": "q131",
+      "scope": "audio",
+      "category": "question",
+      "origin": "robustness",
+      "query": "الفرق بين الأشاعرة والماتريدية"
+    },
+    {
+      "id": "q132",
+      "scope": "audio",
+      "category": "quote",
+      "origin": "robustness",
+      "query": "إنما الأعمال بالنيات"
+    },
+    {
+      "id": "q133",
+      "scope": "audio",
+      "category": "quote",
+      "origin": "robustness",
+      "query": "صلوا في بيوتكم ولا تجعلوها قبورا"
+    },
+    {
+      "id": "q134",
+      "scope": "audio",
+      "category": "quote",
+      "origin": "robustness",
+      "query": "من أحدث في أمرنا هذا ما ليس منه فهو رد"
+    },
+    {
+      "id": "q135",
+      "scope": "audio",
+      "category": "name",
+      "origin": "robustness",
+      "query": "ابن تيمية"
+    },
+    {
+      "id": "q136",
+      "scope": "audio",
+      "category": "name",
+      "origin": "robustness",
+      "query": "الألباني"
+    },
+    {
+      "id": "q137",
+      "scope": "audio",
+      "category": "name",
+      "origin": "robustness",
+      "query": "زاد المستقنع"
+    },
+    {
+      "id": "q138",
+      "scope": "audio",
+      "category": "name",
+      "origin": "robustness",
+      "query": "بلوغ المرام"
+    },
+    {
+      "id": "q139",
+      "scope": "audio",
+      "category": "spelling",
+      "origin": "robustness",
+      "query": "الصلاه"
+    },
+    {
+      "id": "q140",
+      "scope": "audio",
+      "category": "spelling",
+      "origin": "robustness",
+      "query": "مسأله الصداق"
+    },
+    {
+      "id": "q141",
+      "scope": "audio",
+      "category": "spelling",
+      "origin": "robustness",
+      "query": "الصَّلَاةُ عَلَى النَّبِيِّ"
+    },
+    {
+      "id": "q142",
+      "scope": "audio",
+      "category": "typo",
+      "origin": "robustness",
+      "query": "الزكات"
+    },
+    {
+      "id": "q143",
+      "scope": "audio",
+      "category": "typo",
+      "origin": "robustness",
+      "query": "الاحتفل بالمولد"
+    },
+    {
+      "id": "q144",
+      "scope": "audio",
+      "category": "clitic",
+      "origin": "robustness",
+      "query": "والتوحيد"
+    },
+    {
+      "id": "q145",
+      "scope": "audio",
+      "category": "clitic",
+      "origin": "robustness",
+      "query": "بالمولد النبوي"
+    },
+    {
+      "id": "q146",
+      "scope": "audio",
+      "category": "clitic",
+      "origin": "robustness",
+      "query": "والربا"
+    },
+    {
+      "id": "q147",
+      "scope": "audio",
+      "category": "dialect",
+      "origin": "robustness",
+      "query": "شو حكم اللي بصلي وهو قاعد"
+    },
+    {
+      "id": "q148",
+      "scope": "audio",
+      "category": "long",
+      "origin": "robustness",
+      "query": "رجل طلق زوجته ثلاث طلقات في مجلس واحد وهو غضبان فهل يقع الطلاق ثلاثا أم واحدة"
+    },
+    {
+      "id": "q149",
+      "scope": "audio",
+      "category": "none",
+      "origin": "robustness",
+      "query": "asdfghjkl"
+    },
+    {
+      "id": "q150",
+      "scope": "audio",
+      "category": "none",
+      "origin": "robustness",
+      "query": "لابتوب رخيص للألعاب"
+    },
+    {
+      "id": "q151",
+      "scope": "audio",
+      "category": "none",
+      "origin": "robustness",
+      "query": "أفضل هاتف ذكي للتصوير"
+    }
+  ]
+}
