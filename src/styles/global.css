@@ -200,6 +200,63 @@
   letter-spacing: 0;
 }
 
+/*
+  Vidstack's audio layout, themed from the site tokens. Unlayered on purpose:
+  Vidstack's own CSS is unlayered, so any Tailwind layer would lose to it.
+*/
+.player [data-media-player] {
+  --audio-bg: transparent;
+  --audio-border: 0;
+  --audio-border-radius: 0;
+  --audio-brand: var(--accent);
+  --audio-controls-color: var(--fg);
+  --audio-filter: none;
+  --audio-focus-ring-color: var(--ring);
+  --audio-font-family: var(--font-sans);
+  --audio-play-button-bg: var(--accent);
+  --audio-play-button-color: var(--accent-fg);
+  --audio-play-button-size: 2.75rem;
+  --audio-play-button-border-radius: 9999px;
+  --audio-slider-progress-bg: color-mix(in srgb, var(--fg) 20%, transparent);
+  --audio-time-font-size: 13px;
+  --media-menu-bg: var(--surface);
+  --media-menu-border: 1px solid var(--border);
+  --media-menu-item-hover-bg: var(--surface-2);
+  --media-menu-top-bar-bg: var(--surface);
+  --media-tooltip-bg-color: var(--fg);
+  --media-tooltip-color: var(--bg);
+  --media-font-family: var(--font-sans);
+}
+
+/*
+  On phones the settings menu is portalled to <body> and inherits RTL, but it is
+  laid out with physical properties like the rest of the transport.
+*/
+.vds-menu-items {
+  --media-font-family: var(--font-sans);
+  direction: ltr;
+}
+
+/* Phones have hardware volume keys; the seek bar needs the room more. */
+@media (width < 40rem) {
+  .player .vds-audio-layout .vds-volume {
+    display: none;
+  }
+}
+
+/* The seek bar stays put instead of collapsing whenever playback pauses. */
+.player .vds-audio-layout .vds-time-slider {
+  visibility: visible;
+  max-width: 100%;
+  opacity: 1;
+  transform: none;
+}
+
+.player .vds-audio-layout .vds-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
 @utility card {
   background: var(--surface);
   border: 1px solid var(--border);

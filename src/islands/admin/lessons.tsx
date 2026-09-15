@@ -826,7 +826,6 @@ const Detail = ({
           key={lesson.assemblyHash}
           lessonId={lesson.id}
           title={titleOf(lesson.rawTitle)}
-          totalMs={lesson.durationMs}
         />
       </div>
 

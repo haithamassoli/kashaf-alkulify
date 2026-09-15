@@ -1,57 +1,25 @@
 /**
- * The lesson player. A lesson is N separate audio files, so this presents them
- * as one virtual timeline: `offsetMs` already defines where each part starts,
- * and the player advances to the next part on `ended`.
- *
- * Playback is Vidstack's `DefaultAudioLayout`, which brings speed control,
- * keyboard shortcuts, buffering and volume, plus Media Session metadata so the
- * lock screen and notification controls work while the tab is backgrounded.
+ * The dashboard's lesson player: fetches the lesson's signed part URLs, then
+ * hands them to the shared `AudioPlayer`.
  */
 
-import {
-  MediaPlayer,
-  type MediaPlayerInstance,
-  MediaProvider,
-} from "@vidstack/react";
-import {
-  DefaultAudioLayout,
-  defaultLayoutIcons,
-} from "@vidstack/react/player/layouts/default";
 import { useAction } from "convex/react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import {
-  PLAYER_SLOTS,
-  PLAYER_SPEEDS,
-  PLAYER_TRANSLATIONS,
-  usePlayerTheme,
-} from "../../lib/player";
-import { Banner, duration, errorMessage, ICON_BUTTON, num } from "./ui";
-
-interface Part {
-  durationMs: number;
-  mimeType: string | null;
-  offsetMs: number;
-  order: number;
-  partId: Id<"lessonParts">;
-  url: string;
-}
+import { AudioPlayer, type PlayerPart } from "../audio-player";
+import { Banner, errorMessage } from "./ui";
 
 export const LessonPlayer = ({
   lessonId,
   title,
-  totalMs,
 }: {
   lessonId: Id<"lessons">;
   title: string;
-  totalMs: number;
 }): ReactNode => {
   const lessonUrls = useAction(api.media.lessonUrls);
-  const colorScheme = usePlayerTheme();
-  const player = useRef<MediaPlayerInstance>(null);
-  const [parts, setParts] = useState<Part[] | null>(null);
+  const [parts, setParts] = useState<PlayerPart[] | null>(null);
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,42 +48,11 @@ export const LessonPlayer = ({
     };
   }, [lessonId, lessonUrls]);
 
-  const current = parts?.[index] ?? null;
-
-  /**
-   * Vidstack publishes Media Session metadata and action handlers, but never
-   * `setPositionState` — so without this the lock screen would show the current
-   * part's length instead of the lesson's. Republishing on every tick keeps the
-   * scrubber on the whole-lesson timeline.
-   */
-  useEffect(() => {
-    const instance = player.current;
-
-    if (!(instance && current && "mediaSession" in navigator)) {
-      return;
-    }
-
-    return instance.subscribe(({ currentTime, playbackRate }) => {
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: totalMs / 1000,
-          playbackRate: playbackRate || 1,
-          position: Math.min(
-            current.offsetMs / 1000 + currentTime,
-            totalMs / 1000
-          ),
-        });
-      } catch {
-        // Safari throws when the position falls outside the reported duration.
-      }
-    });
-  }, [current, totalMs]);
-
   if (error) {
     return <Banner>{error}</Banner>;
   }
 
-  if (!(parts && current)) {
+  if (!parts) {
     return (
       <p className="flex items-center justify-center gap-2 rounded-xl border border-border border-dashed p-8 text-muted text-sm">
         <Loader2 aria-hidden="true" className="size-4 animate-spin" />
@@ -124,86 +61,7 @@ export const LessonPlayer = ({
     );
   }
 
-  const step = (delta: number) =>
-    setIndex((at) => Math.min(Math.max(at + delta, 0), parts.length - 1));
-
-  const handleEnded = () => step(1);
-  const handlePrevious = () => step(-1);
-  const handleNext = () => step(1);
-
   return (
-    <div className="rounded-xl border border-border bg-surface-2 p-3">
-      {/*
-        The transport stays LTR: Vidstack's default layout is laid out with
-        physical properties, and every platform player keeps media controls LTR
-        even in an RTL locale. The Arabic labels come from `translations`.
-      */}
-      <div dir="ltr">
-        <MediaPlayer
-          artist={`الجزء ${current.order + 1} من ${parts.length}`}
-          className="w-full"
-          crossOrigin={null}
-          key={current.partId}
-          onEnded={handleEnded}
-          playsInline
-          ref={player}
-          src={{
-            src: current.url,
-            type: (current.mimeType ?? "audio/mpeg") as "audio/mpeg",
-          }}
-          title={title}
-          viewType="audio"
-        >
-          <MediaProvider />
-          {/*
-            The seek bar and the ±10s buttons are hidden while paused and slide
-            in on play — that is the layout's own behaviour, not a missing
-            control. `smallLayoutWhen` is left at its default so the layout still
-            collapses on a phone.
-          */}
-          <DefaultAudioLayout
-            colorScheme={colorScheme}
-            icons={defaultLayoutIcons}
-            playbackRates={PLAYER_SPEEDS}
-            seekStep={10}
-            slots={PLAYER_SLOTS}
-            translations={PLAYER_TRANSLATIONS}
-          />
-        </MediaPlayer>
-      </div>
-
-      {parts.length > 1 && (
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <button
-            aria-label="الجزء السابق"
-            className={ICON_BUTTON}
-            disabled={index === 0}
-            onClick={handlePrevious}
-            type="button"
-          >
-            <ChevronRight aria-hidden="true" className="size-5" />
-          </button>
-
-          <p className="text-center text-muted text-xs">
-            الجزء <span className="digits">{num(index + 1)}</span> من{" "}
-            <span className="digits">{num(parts.length)}</span>
-            {" · "}
-            <span className="digits">{duration(current.durationMs)}</span>
-            {" · يبدأ عند "}
-            <span className="digits">{duration(current.offsetMs)}</span>
-          </p>
-
-          <button
-            aria-label="الجزء التالي"
-            className={ICON_BUTTON}
-            disabled={index === parts.length - 1}
-            onClick={handleNext}
-            type="button"
-          >
-            <ChevronLeft aria-hidden="true" className="size-5" />
-          </button>
-        </div>
-      )}
-    </div>
+    <AudioPlayer index={index} onPart={setIndex} parts={parts} title={title} />
   );
 };

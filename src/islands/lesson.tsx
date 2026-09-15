@@ -1,13 +1,5 @@
-import {
-  MediaPlayer,
-  type MediaPlayerInstance,
-  MediaProvider,
-} from "@vidstack/react";
-import {
-  DefaultAudioLayout,
-  defaultLayoutIcons,
-} from "@vidstack/react/player/layouts/default";
-import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import type { MediaPlayerInstance } from "@vidstack/react";
+import { Check, Copy } from "lucide-react";
 import {
   type ChangeEvent,
   type MouseEvent,
@@ -21,13 +13,8 @@ import {
 import { timestamp } from "../lib/format";
 import { highlightWords, normalizeArabic } from "../lib/highlight";
 import { lessonPath } from "../lib/paths";
-import {
-  PLAYER_SLOTS,
-  PLAYER_SPEEDS,
-  PLAYER_TRANSLATIONS,
-  usePlayerTheme,
-} from "../lib/player";
 import { Actions } from "./actions";
+import { AudioPlayer } from "./audio-player";
 
 interface Part {
   durationMs: number;
@@ -97,9 +84,6 @@ const partAt = (parts: Part[], milliseconds: number): number => {
 const segmentAt = (segments: Segment[], milliseconds: number): number =>
   segments.findLastIndex((segment) => segment.startMs <= milliseconds);
 
-const ICON_BUTTON =
-  "grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-fg disabled:pointer-events-none disabled:opacity-40";
-
 interface Props {
   endpoint: string;
   id: string;
@@ -117,7 +101,6 @@ export default function Lesson({
   title,
   transcriptId,
 }: Props): ReactNode {
-  const colorScheme = usePlayerTheme();
   const player = useRef<MediaPlayerInstance>(null);
   const list = useRef<HTMLOListElement>(null);
   const active = useRef(-1);
@@ -314,10 +297,6 @@ export default function Lesson({
     setPartIndex(next);
   };
 
-  const handleEnded = () => changePart(partIndex + 1);
-  const handlePrevious = () => changePart(partIndex - 1);
-  const handleNext = () => changePart(partIndex + 1);
-
   const changeFilter = (event: ChangeEvent<HTMLInputElement>) =>
     setFilter(event.target.value);
 
@@ -433,62 +412,15 @@ export default function Lesson({
           className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-bg/95 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgb(0_0_0/0.08)] backdrop-blur lg:sticky lg:top-20 lg:z-10 lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
           data-print-hide
         >
-          <div className="mx-auto max-w-xl rounded-xl bg-surface-2 p-2 lg:mx-0 lg:max-w-none lg:border lg:border-border lg:p-3">
-            <div dir="ltr">
-              <MediaPlayer
-                artist={`الجزء ${current.order + 1} من ${lesson.parts.length}`}
-                className="[&_.vds-time-slider]:visible! [&_.vds-time-slider]:transform-none! [&_.vds-volume]:hidden! sm:[&_.vds-volume]:flex! w-full [--audio-bg:var(--surface)] [--audio-border:0] [--audio-brand:var(--accent)] [--audio-controls-color:var(--fg)] [--audio-filter:none] [--audio-font-family:var(--font-sans)] [--audio-play-button-bg:var(--accent)] [--audio-play-button-color:var(--accent-fg)] [--audio-play-button-size:2.75rem] [&_.vds-time-slider]:max-w-full! [&_.vds-time-slider]:opacity-100!"
-                crossOrigin={null}
-                key={current.url}
-                onCanPlay={handleCanPlay}
-                onEnded={handleEnded}
-                playsInline
-                preload="metadata"
-                ref={player}
-                src={current.url}
-                title={lesson.title}
-                viewType="audio"
-              >
-                <MediaProvider />
-                <DefaultAudioLayout
-                  colorScheme={colorScheme}
-                  icons={defaultLayoutIcons}
-                  playbackRates={PLAYER_SPEEDS}
-                  seekStep={10}
-                  slots={PLAYER_SLOTS}
-                  translations={PLAYER_TRANSLATIONS}
-                />
-              </MediaPlayer>
-            </div>
-
-            {lesson.parts.length > 1 && (
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <button
-                  aria-label="الجزء السابق"
-                  className={ICON_BUTTON}
-                  disabled={partIndex === 0}
-                  onClick={handlePrevious}
-                  type="button"
-                >
-                  <ChevronRight aria-hidden="true" className="size-5" />
-                </button>
-                <p className="text-center text-muted text-xs">
-                  الجزء <span className="digits">{partIndex + 1}</span> من{" "}
-                  <span className="digits">{lesson.parts.length}</span>
-                  {" · يبدأ عند "}
-                  <span className="digits">{timestamp(current.offsetMs)}</span>
-                </p>
-                <button
-                  aria-label="الجزء التالي"
-                  className={ICON_BUTTON}
-                  disabled={partIndex === lesson.parts.length - 1}
-                  onClick={handleNext}
-                  type="button"
-                >
-                  <ChevronLeft aria-hidden="true" className="size-5" />
-                </button>
-              </div>
-            )}
+          <div className="mx-auto max-w-xl lg:mx-0 lg:max-w-none">
+            <AudioPlayer
+              index={partIndex}
+              onCanPlay={handleCanPlay}
+              onPart={changePart}
+              parts={lesson.parts}
+              playerRef={player}
+              title={lesson.title}
+            />
           </div>
         </section>
 
