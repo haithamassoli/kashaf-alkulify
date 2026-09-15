@@ -111,11 +111,11 @@ These observations come from reading local files, not querying production data.
 
 | Existing area | Relevant observation | Planned treatment |
 | --- | --- | --- |
-| [Schema](/Users/haithamassoli/Desktop/bional/kashaf-alkulify/convex/schema.ts) | Lessons, ordered parts, part offsets, transcript references, articles, review state, and deletion markers already exist | Reuse source identities and provenance; add a derived search export |
-| [Normalization helper](/Users/haithamassoli/Desktop/bional/kashaf-alkulify/convex/lib/normalize.ts) | `norm-v1` folds alef variants, `ة/ه`, and `ى/ي`, and removes Unicode marks for title search | Preserve this existing contract; do not silently reuse it as the strict transcript normalization policy |
-| [Transcript mutation](/Users/haithamassoli/Desktop/bional/kashaf-alkulify/convex/mutations.ts) | Transcript pointers change after artifacts are written; composition identity is tracked separately | Include the actual transcript revision/content hash in search invalidation |
-| [Audio access](/Users/haithamassoli/Desktop/bional/kashaf-alkulify/convex/media.ts) | Current playback signing is tied to admin-authorized access to a private bucket | Add a public-content playback path before public search launch; do not expose the admin action |
-| [Astro configuration](/Users/haithamassoli/Desktop/bional/kashaf-alkulify/astro.config.mjs) | No server adapter is configured in the inspected file | Do not assume a deployed Astro server endpoint already exists; provide a VPS search API behind the site's routing |
+| [Schema](/Users/goldentik/Documents/kashaf-alkulify/convex/schema.ts) | Lessons, ordered parts, part offsets, transcript references, articles, review state, and deletion markers already exist | Reuse source identities and provenance; add a derived search export |
+| [Normalization helper](/Users/goldentik/Documents/kashaf-alkulify/convex/lib/normalize.ts) | `norm-v1` folds alef variants, `ة/ه`, and `ى/ي`, and removes Unicode marks for title search | Preserve this existing contract; do not silently reuse it as the strict transcript normalization policy |
+| [Transcript mutation](/Users/goldentik/Documents/kashaf-alkulify/convex/mutations.ts) | Transcript pointers change after artifacts are written; composition identity is tracked separately | Include the actual transcript revision/content hash in search invalidation |
+| [Audio access](/Users/goldentik/Documents/kashaf-alkulify/convex/media.ts) | Current playback signing is tied to admin-authorized access to a private bucket | Add a public-content playback path before public search launch; do not expose the admin action |
+| [Astro configuration](/Users/goldentik/Documents/kashaf-alkulify/astro.config.mjs) | No server adapter is configured in the inspected file | Do not assume a deployed Astro server endpoint already exists; provide a VPS search API behind the site's routing |
 
 Do not infer that `reviewStatus: approved` certifies transcript accuracy. The existing review workflow may concern lesson grouping rather than transcription. Establish publication eligibility and transcript review status separately during the data audit.
 
