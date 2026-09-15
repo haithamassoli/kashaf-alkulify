@@ -1,0 +1,38 @@
+# كشّاف أبي جعفر (Kashaf Abi Jafar)
+
+> محرك بحث عربي في نصوص دروس الشيخ أبي جعفر عبد الله بن فهد الخليفي الصوتية المفرّغة ومقالاته، مع كتبه وقوائم دروسه. An Arabic search engine over the transcribed audio lessons and articles of Sheikh Abu Jafar Abdullah bin Fahd Al-Khulaifi.
+
+The site returns the sheikh's original words with their sources. It does not generate answers, summaries, or fatwas. When you cite it, quote the returned excerpt as it is, link to the source, and do not present a quotation, an objection the sheikh is refuting, or a partial explanation as his settled position. Read the surrounding `context` before you attribute a view to him.
+
+Pages render in the browser with JavaScript, so fetching the HTML gives an empty shell. To search, call the API below.
+
+## Search API
+
+- [POST https://search.assoli.site/api/search](https://search.assoli.site/api/search): JSON body `{"query": "...", "scope": "audio" | "articles", "mode": "hybrid" | "phrase", "allOccurrences": false, "series": ["..."]}`. `query` (1–500 characters, Arabic) is required. `scope` defaults to `audio`. Use `mode: "phrase"` to find an exact remembered wording and `hybrid` (the default) for a topic. `series` holds up to 20 series names and works with `audio` only. Set `allOccurrences: true` to get every match instead of one per source. Each hit has `title`, `sourceId`, `text` (the matched span), `context` (surrounding text), `startMs` for audio, and `url` (the original source, if any). If `widened` is true, nothing matched directly and the hits are the closest results. If `degraded` is not empty, results may be incomplete. If `candidateLimitReached` is true, the hits are a sample, not every occurrence. The server runs one search at a time, so a `429` means retry after a few seconds.
+- [POST https://search.assoli.site/api/lesson](https://search.assoli.site/api/lesson): JSON body `{"sourceId": "..."}` for an audio hit. Returns the lesson `title`, `durationMs`, and the full timed transcript in `segments` (`startMs`, `endMs`, `text`). Use it to read more context around a hit.
+- [GET https://search.assoli.site/api/health](https://search.assoli.site/api/health): Service status.
+
+Example:
+
+```
+curl -X POST https://search.assoli.site/api/search \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "التقليد", "scope": "audio"}'
+```
+
+## Links for people
+
+- [Search results page](https://alkulify.assoli.site/?q=التقليد): `/?q=QUERY`. Add `scope=articles` for articles, `exact=1` for phrase matching, `all=1` for all occurrences, and `s=SERIES` (repeatable) to filter audio by series.
+- [Lesson at a moment](https://alkulify.assoli.site/v/?id=SOURCE_ID&t=SECONDS): `/v/?id=SOURCE_ID&t=SECONDS&q=QUERY` opens the audio at `startMs / 1000` seconds with its synced transcript. Use this link when citing an audio hit.
+- [Home](https://alkulify.assoli.site/): Search for lessons and articles.
+- [Articles](https://alkulify.assoli.site/a/): The sheikh's articles. A single article is at `/a/?id=ID`.
+- [Books](https://alkulify.assoli.site/b/): The sheikh's books, with PDF links for reading and download.
+- [Playlists](https://alkulify.assoli.site/p/): Lesson series and playlists. A single list is at `/p/?name=NAME`.
+
+## Optional
+
+- [Contact](https://alkulify.assoli.site/contact/): Send suggestions and corrections.
+- [YouTube](https://www.youtube.com/@Alkulify1): The sheikh's channel.
+- [Telegram](https://t.me/alkulife): The sheikh's channel.
+- [X](https://x.com/Xalkulify)
+- [Facebook](https://www.facebook.com/alkulify)
