@@ -44,6 +44,10 @@ def read_json(path: Path):
 
 
 def load_env():
+    if not (ROOT / ".env.local").exists():
+        os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+        os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+        return
     # Node parses the project's existing dotenv syntax; never echo credentials.
     import subprocess
     result = subprocess.run(

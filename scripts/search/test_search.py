@@ -1,7 +1,10 @@
+import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from core import Meili, anchor, group_hits, metrics, normalize, passage_ranges, phrase_spans, source_text
+from core import Meili, anchor, group_hits, load_env, metrics, normalize, passage_ranges, phrase_spans, source_text
 
 
 class Tokenizer:
@@ -10,6 +13,11 @@ class Tokenizer:
 
 
 class SearchContracts(unittest.TestCase):
+    def test_load_env_without_dotenv_or_node(self):
+        with tempfile.TemporaryDirectory() as directory, patch("core.ROOT", Path(directory)), patch.dict(os.environ, {}, clear=True):
+            load_env()
+            self.assertEqual(os.environ["HF_HUB_DISABLE_TELEMETRY"], "1")
+
     def test_arabic_contract_and_offsets(self):
         text = "قَالَ: إِنَّ الصَّلاةَ لا تُتْرَكُ."
         spans = phrase_spans(text, "إن الصلاة لا تترك")
