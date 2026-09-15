@@ -252,6 +252,12 @@
   transform: none;
 }
 
+/* Vidstack caps every button at 36px wide, which squashed the play button. */
+.player .vds-audio-layout .vds-play-button {
+  flex-shrink: 0;
+  max-width: none;
+}
+
 .player .vds-audio-layout .vds-time {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
