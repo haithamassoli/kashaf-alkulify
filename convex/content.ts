@@ -4,6 +4,7 @@ import {
 } from "convex/server";
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
+import { photoKeys } from "./lib/articles";
 import { normalize } from "./lib/normalize";
 
 const MAX_LESSONS = 6000;
@@ -185,7 +186,9 @@ export const articles = query({
         found.page.map(async (row) => {
           const message = await ctx.db.get("telegramMessages", row.messageId);
 
-          return message === null || message.deletedAt !== undefined
+          return message === null ||
+            message.deletedAt !== undefined ||
+            row.deletedAt !== undefined
             ? null
             : {
                 date: row.date,
@@ -213,7 +216,7 @@ export const article = query({
 
     const row = await ctx.db.get("articles", id);
 
-    if (row === null) {
+    if (row === null || row.deletedAt !== undefined) {
       return null;
     }
 
@@ -225,6 +228,7 @@ export const article = query({
 
     return {
       date: row.date,
+      photos: await photoKeys(ctx, row._id),
       telegramUrl: row.telegramUrl,
       text: row.text,
       title: row.title,
@@ -233,6 +237,8 @@ export const article = query({
   returns: v.union(
     v.object({
       date: v.number(),
+      /** R2 keys of the article's photos, in display order. */
+      photos: v.array(v.string()),
       telegramUrl: v.string(),
       text: v.string(),
       title: v.string(),

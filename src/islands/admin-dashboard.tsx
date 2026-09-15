@@ -15,6 +15,7 @@ import {
   FileText,
   Gauge,
   GraduationCap,
+  Image,
   LogOut,
   Menu,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import { Books } from "./admin/books";
 import { Failures } from "./admin/failures";
 import { Lessons } from "./admin/lessons";
 import { Overview } from "./admin/overview";
+import { Photos } from "./admin/photos";
 import {
   Chip,
   count,
@@ -75,6 +77,7 @@ const PANELS = [
   { icon: Gauge, id: "overview", label: "نظرة عامة" },
   { icon: GraduationCap, id: "lessons", label: "الدروس" },
   { icon: FileText, id: "articles", label: "المقالات" },
+  { icon: Image, id: "photos", label: "الصور" },
   { icon: AlertTriangle, id: "failures", label: "الإخفاقات" },
   { icon: BookMarked, id: "books", label: "الكتب" },
 ] as const;
@@ -372,6 +375,7 @@ const Shell = ({ email }: { email: string }): ReactNode => {
           {panel === "overview" && <Overview />}
           {panel === "lessons" && <Lessons />}
           {panel === "articles" && <Articles />}
+          {panel === "photos" && <Photos />}
           {panel === "failures" && <Failures />}
           {panel === "books" && <Books email={email} />}
         </div>

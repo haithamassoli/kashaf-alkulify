@@ -13,6 +13,9 @@ const source = async (ctx: QueryCtx, id: Id<"lessons"> | Id<"articles">) => {
     return null;
   }
   if ("text" in row) {
+    if (row.deletedAt !== undefined) {
+      return null;
+    }
     const message = await ctx.db.get("telegramMessages", row.messageId);
     if (message === null || message.deletedAt !== undefined) {
       return null;

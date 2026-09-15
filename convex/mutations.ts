@@ -7,6 +7,7 @@
 
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { setPhotos } from "./lib/articles";
 import { retireLesson } from "./lib/lessons";
 
 const STALE_HEARTBEAT_MS = 5 * 60 * 1000; // §4.5
@@ -574,12 +575,13 @@ export const upsertArticle = mutation({
     messageId: v.id("telegramMessages"),
     normalizedText: v.string(),
     normalizedTitle: v.string(),
+    photoIds: v.optional(v.array(v.id("mediaObjects"))),
     telegramUrl: v.string(),
     text: v.string(),
     title: v.string(),
     titleSource: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, { photoIds, ...args }) => {
     const rows = await ctx.db
       .query("articles")
       .withIndex("by_message", (q) => q.eq("messageId", args.messageId))
@@ -590,17 +592,46 @@ export const upsertArticle = mutation({
     );
     if (existing === null) {
       const id = await ctx.db.insert("articles", args);
+      await setPhotos(ctx, id, photoIds ?? []);
       return { changed: true, created: true, id };
     }
-    const same = (Object.keys(args) as (keyof typeof args)[]).every(
-      (key) => existing[key as keyof typeof existing] === args[key]
-    );
-    if (same) {
+    // A deleted or merged article is a tombstone: extracting it again would
+    // undo the admin.
+    if (existing.deletedAt !== undefined) {
       return { changed: false, created: false, id: existing._id };
+    }
+    // A hand edit outranks a rerun, field group by field group.
+    const {
+      normalizedText,
+      normalizedTitle,
+      text,
+      title,
+      titleSource,
+      ...always
+    } = args;
+    const fields = existing.textLocked
+      ? always
+      : {
+          ...always,
+          normalizedText,
+          normalizedTitle,
+          text,
+          title,
+          titleSource,
+        };
+    const same = (Object.keys(fields) as (keyof typeof fields)[]).every(
+      (key) => existing[key] === fields[key]
+    );
+    const photosChanged =
+      photoIds !== undefined && !existing.photosLocked
+        ? await setPhotos(ctx, existing._id, photoIds)
+        : false;
+    if (same) {
+      return { changed: photosChanged, created: false, id: existing._id };
     }
     // indexedAt/indexVersion belong to Phase 4 and are left untouched here: a
     // changed article is reindexed because its text moved, not because M3 ran.
-    await ctx.db.patch(existing._id, args);
+    await ctx.db.patch(existing._id, fields);
     return { changed: true, created: false, id: existing._id };
   },
 });

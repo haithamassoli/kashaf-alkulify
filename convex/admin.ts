@@ -8,15 +8,18 @@ import {
   paginationOptsValidator,
   paginationResultValidator,
 } from "convex/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
+  type MutationCtx,
   mutation,
+  type QueryCtx,
   query,
 } from "./_generated/server";
+import { photoArticle, photoRows, setPhotos } from "./lib/articles";
 import { requireAdmin } from "./lib/auth";
 import { recompose, retireLesson, retireMediaIfUnused } from "./lib/lessons";
 import { normalize } from "./lib/normalize";
@@ -383,11 +386,13 @@ export const articles = query({
             .withSearchIndex("search_title", (q) =>
               q.search("normalizedTitle", term)
             )
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .paginate(args.paginationOpts)
         : await ctx.db
             .query("articles")
             .withIndex("by_channel_date")
             .order("desc")
+            .filter((q) => q.eq(q.field("deletedAt"), undefined))
             .paginate(args.paginationOpts);
 
     return {
@@ -403,6 +408,263 @@ export const articles = query({
       })),
     };
   },
+});
+
+/** The live article that comes right after this one in its channel. */
+const nextArticle = async (ctx: QueryCtx, row: Doc<"articles">) =>
+  await ctx.db
+    .query("articles")
+    .withIndex("by_channel_date", (q) =>
+      q.eq("channelId", row.channelId).gt("date", row.date)
+    )
+    .filter((q) => q.eq(q.field("deletedAt"), undefined))
+    .first();
+
+/** One article in full, with its photos and the article posted after it. */
+export const article = query({
+  args: { id: v.id("articles") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const row = await ctx.db.get("articles", args.id);
+
+    if (row === null || row.deletedAt !== undefined) {
+      return null;
+    }
+
+    const next = await nextArticle(ctx, row);
+
+    return {
+      date: row.date,
+      id: row._id,
+      next:
+        next === null
+          ? null
+          : {
+              date: next.date,
+              id: next._id,
+              preview: next.text.slice(0, 240),
+              title: next.title,
+            },
+      photoIds: (await photoRows(ctx, row._id)).map((p) => p.mediaObjectId),
+      photosLocked: row.photosLocked ?? false,
+      telegramUrl: row.telegramUrl,
+      text: row.text,
+      textLocked: row.textLocked ?? false,
+      title: row.title,
+    };
+  },
+});
+
+/** A live article, or a thrown error the dashboard can show. */
+const liveArticle = async (ctx: MutationCtx, id: Id<"articles">) => {
+  const row = await ctx.db.get("articles", id);
+
+  if (row === null || row.deletedAt !== undefined) {
+    throw new ConvexError({ message: "المقالة غير موجودة أو حُذفت." });
+  }
+
+  return row;
+};
+
+/**
+ * Rewrites an article's title and body. `textLocked` is what makes the edit
+ * outlive the next Organizer run, the same way `titleLocked` does for lessons.
+ */
+export const updateArticle = mutation({
+  args: { id: v.id("articles"), text: v.string(), title: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await liveArticle(ctx, args.id);
+
+    const title = args.title.trim();
+    const text = args.text.trim();
+
+    if (title.length === 0 || text.length === 0) {
+      throw new ConvexError({ message: "العنوان والنص لا يكونان فارغين." });
+    }
+
+    await ctx.db.patch("articles", args.id, {
+      normalizedText: normalize(text),
+      normalizedTitle: normalize(title),
+      text,
+      textLocked: true,
+      title,
+    });
+
+    return null;
+  },
+  returns: v.null(),
+});
+
+/** Deletes an article. The row stays as the Organizer's tombstone. */
+export const deleteArticle = mutation({
+  args: { id: v.id("articles") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await liveArticle(ctx, args.id);
+    await setPhotos(ctx, args.id, []);
+    await ctx.db.patch("articles", args.id, { deletedAt: Date.now() });
+
+    return null;
+  },
+  returns: v.null(),
+});
+
+/**
+ * Joins two articles into one — the repair for a post Telegram split across
+ * messages. The earlier article survives and the later one's text and photos
+ * are appended to it; the later row becomes a tombstone pointing at it.
+ *
+ * @returns the surviving article.
+ */
+export const mergeArticles = mutation({
+  args: { id: v.id("articles"), otherId: v.id("articles") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    if (args.id === args.otherId) {
+      throw new ConvexError({ message: "لا يمكن دمج المقالة مع نفسها." });
+    }
+
+    const [first, second] = [
+      await liveArticle(ctx, args.id),
+      await liveArticle(ctx, args.otherId),
+    ].sort((a, b) => a.date - b.date || a._creationTime - b._creationTime);
+    const text = `${first.text}\n${second.text}`;
+    const photos = [
+      ...(await photoRows(ctx, first._id)),
+      ...(await photoRows(ctx, second._id)),
+    ].map((row) => row.mediaObjectId);
+
+    await setPhotos(ctx, second._id, []);
+    await ctx.db.patch("articles", second._id, {
+      deletedAt: Date.now(),
+      mergedInto: first._id,
+    });
+    await setPhotos(ctx, first._id, photos);
+    await ctx.db.patch("articles", first._id, {
+      normalizedText: normalize(text),
+      photosLocked: true,
+      text,
+      textLocked: true,
+    });
+
+    return first._id;
+  },
+  returns: v.id("articles"),
+});
+
+/** Appends a photo to an article, or takes it off. Either locks the photos. */
+export const setArticlePhoto = mutation({
+  args: {
+    id: v.id("articles"),
+    linked: v.boolean(),
+    mediaObjectId: v.id("mediaObjects"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await liveArticle(ctx, args.id);
+
+    const media = await ctx.db.get("mediaObjects", args.mediaObjectId);
+
+    if (media === null || media.deletedAt !== undefined) {
+      throw new ConvexError({ message: "الصورة غير موجودة." });
+    }
+
+    const ids = (await photoRows(ctx, args.id))
+      .map((row) => row.mediaObjectId)
+      .filter((id) => id !== args.mediaObjectId);
+
+    await setPhotos(
+      ctx,
+      args.id,
+      args.linked ? [...ids, args.mediaObjectId] : ids
+    );
+    await ctx.db.patch("articles", args.id, { photosLocked: true });
+
+    return null;
+  },
+  returns: v.null(),
+});
+
+/**
+ * Photos posted to Telegram that no article shows, newest first. A page may
+ * come back shorter than asked: linked photos are filtered out of it.
+ */
+export const unlinkedPhotos = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const found = await ctx.db
+      .query("telegramMessages")
+      .withIndex("by_media_type_and_date", (q) => q.eq("mediaType", "photo"))
+      .order("desc")
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .paginate(args.paginationOpts);
+
+    const page = [];
+
+    for (const message of found.page) {
+      const links = await ctx.db
+        .query("messageMedia")
+        .withIndex("by_message", (q) => q.eq("messageId", message._id))
+        .take(10);
+
+      for (const link of links) {
+        const media = await ctx.db.get("mediaObjects", link.mediaObjectId);
+
+        if (
+          media === null ||
+          media.deletedAt !== undefined ||
+          (await photoArticle(ctx, media._id)) !== null
+        ) {
+          continue;
+        }
+
+        page.push({
+          caption: message.text?.slice(0, 240) ?? null,
+          date: message.date,
+          isForwarded: message.isForwarded,
+          mediaObjectId: media._id,
+          telegramUrl: message.telegramUrl,
+        });
+      }
+    }
+
+    return { ...found, page };
+  },
+  returns: paginationResultValidator(
+    v.object({
+      caption: v.union(v.string(), v.null()),
+      date: v.number(),
+      isForwarded: v.boolean(),
+      mediaObjectId: v.id("mediaObjects"),
+      telegramUrl: v.string(),
+    })
+  ),
+});
+
+/** R2 keys for photos. Internal: only `media.photoUrls` signs them. */
+export const photoKeysById = internalQuery({
+  args: { ids: v.array(v.id("mediaObjects")) },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const keys = [];
+
+    for (const id of args.ids.slice(0, 100)) {
+      const media = await ctx.db.get("mediaObjects", id);
+
+      if (media?.mimeType?.startsWith("image/")) {
+        keys.push({ id, r2Key: media.r2Key });
+      }
+    }
+
+    return keys;
+  },
+  returns: v.array(v.object({ id: v.id("mediaObjects"), r2Key: v.string() })),
 });
 
 /** Unresolved failures across every stage, most recently tried first. */

@@ -35,6 +35,7 @@
       // network I/O and wrong about a transaction body.
       "includes": [
         "convex/admin.ts",
+        "convex/lib/articles.ts",
         "convex/lib/lessons.ts",
         "convex/mutations.ts",
         "convex/queries.ts"

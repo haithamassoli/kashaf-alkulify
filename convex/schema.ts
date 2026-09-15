@@ -27,16 +27,36 @@ export const bookSeedValidator = bookValidator.omit("published", "order");
 // lessonKey / stage is NOT enforced by these indexes; it is enforced by the
 // atomic mutations in mutations.ts, which are serializable (plan §0 item 3).
 const schema = defineSchema({
+  /** An article's photos, in display order. Separate so a photo can be looked up. */
+  articlePhotos: defineTable({
+    articleId: v.id("articles"),
+    mediaObjectId: v.id("mediaObjects"),
+    order: v.number(),
+  })
+    .index("by_article_and_order", ["articleId", "order"])
+    .index("by_media_object", ["mediaObjectId"]),
+
   articles: defineTable({
     channelId: v.id("channels"),
     date: v.number(),
+    /**
+     * Set when an admin deletes the article or merges it into another. The row
+     * stays as a tombstone so the Organizer never extracts it again.
+     */
+    deletedAt: v.optional(v.number()),
     indexedAt: v.optional(v.number()),
     indexVersion: v.optional(v.string()),
+    /** The article this one was merged into. */
+    mergedInto: v.optional(v.id("articles")),
     messageId: v.id("telegramMessages"),
     normalizedText: v.string(),
     normalizedTitle: v.string(),
+    /** Set when an admin edits the photos; the Organizer stops relinking them. */
+    photosLocked: v.optional(v.boolean()),
     telegramUrl: v.string(),
     text: v.string(),
+    /** Set when an admin edits or merges the text; the Organizer stops rewriting it. */
+    textLocked: v.optional(v.boolean()),
     title: v.string(),
     titleSource: v.string(),
   })
@@ -296,7 +316,8 @@ const schema = defineSchema({
     text: v.optional(v.string()),
   })
     .index("by_channel_message", ["channelId", "telegramMessageId"])
-    .index("by_channel_date", ["channelId", "date"]),
+    .index("by_channel_date", ["channelId", "date"])
+    .index("by_media_type_and_date", ["mediaType", "date"]),
 });
 
 export default schema;

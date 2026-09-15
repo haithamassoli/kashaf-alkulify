@@ -112,6 +112,31 @@ export const lessonUrls = action({
   ),
 });
 
+/** Short-lived URLs for the dashboard's photo thumbnails. */
+export const photoUrls = action({
+  args: { ids: v.array(v.id("mediaObjects")) },
+  handler: async (ctx, args) => {
+    const keys: { id: Id<"mediaObjects">; r2Key: string }[] =
+      await ctx.runQuery(internal.admin.photoKeysById, { ids: args.ids });
+    const { client, url: objectUrl } = archive();
+
+    return await Promise.all(
+      keys.map(async ({ id, r2Key }) => {
+        const url = objectUrl(r2Key);
+
+        url.searchParams.set("X-Amz-Expires", String(EXPIRES_SECONDS));
+
+        const signed = await client.sign(url.toString(), {
+          aws: { signQuery: true },
+        });
+
+        return { id, url: signed.url };
+      })
+    );
+  },
+  returns: v.array(v.object({ id: v.id("mediaObjects"), url: v.string() })),
+});
+
 /**
  * Deletes a lesson or one of its parts, rows first and then the audio itself.
  *

@@ -34,6 +34,7 @@ const schema = {
 
 <Base
   description={article.text.replaceAll(/\s+/g, " ").slice(0, 160)}
+  image={article.photos.length > 0 ? `${path}1.jpg` : undefined}
   schema={[schema, breadcrumb([["المقالات", "/a/"], [article.title, path]])]}
   title={article.title}
   type="article"
@@ -71,6 +72,16 @@ const schema = {
       title={article.title}
       client:idle
     />
+    {article.photos.map((_, index) => (
+        // biome-ignore lint/correctness/useImageSize: the archive does not store a Telegram photo's dimensions.
+        <img
+          alt=""
+          class="mx-auto mt-6 max-w-full rounded-xl"
+          decoding="async"
+          loading={index === 0 ? "eager" : "lazy"}
+          src={`${path}${index + 1}.jpg`}
+        />
+      ))}
     <div
       class="prose-read mt-6 max-w-none whitespace-pre-wrap text-fg"
       id="article-text"

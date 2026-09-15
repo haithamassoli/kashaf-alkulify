@@ -30,6 +30,7 @@ const LIMIT = import.meta.env.DEV ? 40 : Number.POSITIVE_INFINITY;
 export interface Article {
   date: number;
   id: string;
+  photos: string[];
   telegramUrl: string;
   text: string;
   title: string;
@@ -122,7 +123,9 @@ export const articles = once(async (): Promise<Article[]> => {
   );
   const found = await pool(list, 32, async ({ id }) => {
     const article = await convex.query(api.content.article, { id });
-    return article && { ...article, id };
+    // Photos are copied out of R2 at build time; without R2 there is nothing to
+    // copy. `lessons` already fails a production build that has no R2.
+    return article && { ...article, id, photos: r2() ? article.photos : [] };
   });
   return found.filter((article) => article !== null);
 });
@@ -161,7 +164,7 @@ export const series = once(async (): Promise<Series[]> => {
 
 const TRAILING_SLASHES = /\/+$/;
 
-const r2 = (): {
+export const r2 = (): {
   client: AwsClient;
   object: (key: string) => string;
 } | null => {
